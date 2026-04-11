@@ -1,71 +1,92 @@
-'use client'
+"use client"
+
+import { useEffect, useState } from "react"
 
 const services = [
-  {
-    name: "Auth Service",
-    description: "Gestion de l'authentification et des sessions utilisateur.",
-    status: "actif",
-    endpoint: "/api/auth",
-    tech: "NextAuth + Prisma",
-  },
-  {
-    name: "API Hello",
-    description: "Endpoint protégé de test pour les microservices.",
-    status: "actif",
-    endpoint: "/api/hello",
-    tech: "Next.js API Route",
-  },
-  {
-    name: "Register Service",
-    description: "Inscription des nouveaux utilisateurs avec validation.",
-    status: "actif",
-    endpoint: "/api/auth/register",
-    tech: "bcrypt + Prisma",
-  },
+  { name: "Auth Service",         port: 3001, route: "/api/auth" },
+  { name: "User Service",         port: 3002, route: "/api/users" },
+  { name: "Product Service",      port: 3003, route: "/api/products" },
+  { name: "Inventory Service",    port: 3004, route: "/api/inventory" },
+  { name: "Order Service",        port: 3005, route: "/api/orders" },
+  { name: "Production Service",   port: 3006, route: "/api/production" },
+  { name: "Billing Service",      port: 3007, route: "/api/billing" },
+  { name: "Notification Service", port: 3008, route: "/api/notify" },
+  { name: "Reporting Service",    port: 3009, route: "/api/reports" },
 ]
 
+type Status = "checking" | "online" | "offline"
+
 export default function ServicesPage() {
+  const [kongStatus, setKongStatus] = useState<Status>("checking")
+  const [rabbitStatus, setRabbitStatus] = useState<Status>("checking")
+  const [serviceStatuses, setServiceStatuses] = useState<Record<string, Status>>(
+    Object.fromEntries(services.map(s => [s.name, "checking"]))
+  )
+
+  useEffect(() => {
+    // Vérifier Kong
+    fetch("/api/kong-status")
+      .then(r => r.json())
+      .then(data => setKongStatus(data.kong ? "online" : "offline"))
+      .catch(() => setKongStatus("offline"))
+
+    // Vérifier RabbitMQ
+    fetch("/api/kong-status")
+      .then(r => r.json())
+      .then(data => setRabbitStatus(data.rabbitmq ? "online" : "offline"))
+      .catch(() => setRabbitStatus("offline"))
+
+    // Simuler statut des microservices (pas encore démarrés)
+    services.forEach(s => {
+      setServiceStatuses(prev => ({ ...prev, [s.name]: "offline" }))
+    })
+  }, [])
+
+  const badge = (status: Status) => {
+    if (status === "checking") return <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">⏳ Vérification...</span>
+    if (status === "online")   return <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">✅ En ligne</span>
+    return                            <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">❌ Hors ligne</span>
+  }
+
   return (
-    <div className="p-6 lg:p-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Microservices</h1>
-        <p className="text-zinc-500">
-          Liste et état des services de l&apos;application.
-        </p>
+    <div className="p-6 space-y-8">
+      <h1 className="text-2xl font-bold">Statut des Services</h1>
+
+      {/* Infrastructure */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Infrastructure</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
+            <div>
+              <p className="font-medium">Kong Gateway</p>
+              <p className="text-sm text-gray-500">Port 8000 / Admin 8001</p>
+            </div>
+            {badge(kongStatus)}
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
+            <div>
+              <p className="font-medium">RabbitMQ</p>
+              <p className="text-sm text-gray-500">Port 5672 / Dashboard 15672</p>
+            </div>
+            {badge(rabbitStatus)}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {services.map((service) => (
-          <div
-            key={service.name}
-            className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6"
-          >
-            <div className="flex items-start justify-between">
+      {/* Microservices */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Microservices</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {services.map(s => (
+            <div key={s.name} className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-lg">{service.name}</h3>
-                  <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-0.5 rounded-full font-medium">
-                    {service.status}
-                  </span>
-                </div>
-                <p className="text-sm text-zinc-500 mb-3">{service.description}</p>
-                <div className="flex items-center gap-4 text-xs text-zinc-400">
-                  <span>
-                    <span className="font-medium text-zinc-600 dark:text-zinc-300">Endpoint :</span>{" "}
-                    <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                      {service.endpoint}
-                    </code>
-                  </span>
-                  <span>
-                    <span className="font-medium text-zinc-600 dark:text-zinc-300">Tech :</span>{" "}
-                    {service.tech}
-                  </span>
-                </div>
+                <p className="font-medium">{s.name}</p>
+                <p className="text-sm text-gray-500">:{s.port} → {s.route}</p>
               </div>
-              <div className="w-3 h-3 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+              {badge(serviceStatuses[s.name])}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )
