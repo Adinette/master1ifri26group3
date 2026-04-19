@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ProductionBatch {
+  id          Int      @id @default(autoincrement())
+  productId   Int      @map("product_id")
+  productName String   @map("product_name") @db.VarChar(255)
+  quantity    Int
+  status      String   @default("planned") @db.VarChar(50)
+  startDate   DateTime @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("production_batches")
+}

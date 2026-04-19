@@ -1,0 +1,23 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(100)
+  message   String   @db.Text
+  recipient String   @db.VarChar(255)
+  status    String   @default("sent") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}

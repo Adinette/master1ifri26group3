@@ -1,0 +1,26 @@
+import { prisma } from '@/lib/prisma'
+import { NextRequest } from 'next/server'
+
+export async function GET() {
+  try {
+    const batches = await prisma.productionBatch.findMany({ orderBy: { createdAt: 'desc' } })
+    return Response.json(batches)
+  } catch {
+    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { productId, productName, quantity, startDate } = await req.json()
+    if (!productId || !productName || !quantity || !startDate) {
+      return Response.json({ error: 'Champs requis manquants' }, { status: 400 })
+    }
+    const batch = await prisma.productionBatch.create({
+      data: { productId, productName, quantity, status: 'planned', startDate: new Date(startDate) }
+    })
+    return Response.json(batch, { status: 201 })
+  } catch {
+    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
+}
