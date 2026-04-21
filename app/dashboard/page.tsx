@@ -20,12 +20,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
           <p className="text-sm text-zinc-500 mb-1">Microservices</p>
-          <p className="text-2xl font-bold">3</p>
-          <p className="text-xs text-green-600 mt-1">Tous actifs</p>
+          <p className="text-2xl font-bold">9</p>
+          <p className="text-xs text-green-600 mt-1">Configurés</p>
         </div>
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
           <p className="text-sm text-zinc-500 mb-1">Endpoints API</p>
-          <p className="text-2xl font-bold">6</p>
+          <p className="text-2xl font-bold">12+</p>
           <p className="text-xs text-zinc-400 mt-1">REST</p>
         </div>
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
@@ -42,7 +42,15 @@ export default function DashboardPage() {
 
       {/* Cards */}
       <h2 className="text-lg font-semibold mb-4">Accès rapide</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <Link href="/dashboard/products" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Produits</h3>
+          <p className="text-sm text-zinc-500">Gérez le catalogue de produits — création, modification, suppression.</p>
+        </Link>
+        <Link href="/dashboard/stock" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Stock & Inventaire</h3>
+          <p className="text-sm text-zinc-500">Suivez les niveaux de stock et enregistrez les mouvements (entrées/sorties).</p>
+        </Link>
         <Link href="/dashboard/profile" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
           <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Mon profil</h3>
           <p className="text-sm text-zinc-500">Consultez et modifiez vos informations personnelles.</p>
@@ -51,13 +59,9 @@ export default function DashboardPage() {
           <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Microservices</h3>
           <p className="text-sm text-zinc-500">Gérez et surveillez les microservices de l&apos;application.</p>
         </Link>
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
-          <h3 className="font-semibold text-lg mb-2">API</h3>
-          <p className="text-sm text-zinc-500">Documentation et test des endpoints REST.</p>
-        </div>
-        <Link href="/dashboard/settings" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Paramètres</h3>
-          <p className="text-sm text-zinc-500">Configuration de l&apos;application et préférences.</p>
+        <Link href="/dashboard/reporting" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Reporting</h3>
+          <p className="text-sm text-zinc-500">Consultez l&apos;agrégation Phase 7 : commandes, factures, notifications, production et stock critique.</p>
         </Link>
       </div>
     </div>

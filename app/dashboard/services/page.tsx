@@ -24,22 +24,27 @@ export default function ServicesPage() {
   )
 
   useEffect(() => {
-    // Vérifier Kong
     fetch("/api/kong-status")
       .then(r => r.json())
-      .then(data => setKongStatus(data.kong ? "online" : "offline"))
-      .catch(() => setKongStatus("offline"))
+      .then(data => {
+        setKongStatus(data.kong ? "online" : "offline")
+        setRabbitStatus(data.rabbitmq ? "online" : "offline")
+      })
+      .catch(() => {
+        setKongStatus("offline")
+        setRabbitStatus("offline")
+      })
 
-    // Vérifier RabbitMQ
-    fetch("/api/kong-status")
+    fetch("/api/services-status")
       .then(r => r.json())
-      .then(data => setRabbitStatus(data.rabbitmq ? "online" : "offline"))
-      .catch(() => setRabbitStatus("offline"))
-
-    // Simuler statut des microservices (pas encore démarrés)
-    services.forEach(s => {
-      setServiceStatuses(prev => ({ ...prev, [s.name]: "offline" }))
-    })
+      .then(data => {
+        if (data?.services) {
+          setServiceStatuses(data.services)
+        }
+      })
+      .catch(() => {
+        setServiceStatuses(Object.fromEntries(services.map(s => [s.name, "offline"])))
+      })
   }, [])
 
   const badge = (status: Status) => {
