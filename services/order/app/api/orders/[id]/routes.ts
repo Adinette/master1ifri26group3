@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const order = await prisma.order.findUnique({ where: { id: parseInt(params.id) } })
+    const { id } = await params
+    const order = await prisma.order.findUnique({ where: { id: parseInt(id) } })
     if (!order) return Response.json({ error: 'Commande non trouvée' }, { status: 404 })
     return Response.json(order)
   } catch {
@@ -11,8 +12,9 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await req.json()
     const { status } = body
 
@@ -22,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const order = await prisma.order.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: { status }
     })
     return Response.json(order)
