@@ -1,13 +1,17 @@
-import { prisma } from '@/lib/prisma'
+import { createPaymentAndMarkInvoicePaid, listPayments } from '@/lib/billing-store'
 import { publishEvent } from '@/lib/rabbitmq'
 import { NextRequest } from 'next/server'
 
 export async function GET() {
   try {
-    const payments = await prisma.payment.findMany({ orderBy: { createdAt: 'desc' } })
+    const payments = await listPayments()
     return Response.json(payments)
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('Billing GET /api/payments failed:', error)
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Erreur serveur' },
+      { status: 500 }
+    )
   }
 }
 
@@ -18,14 +22,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Champs requis manquants' }, { status: 400 })
     }
 
-    const payment = await prisma.payment.create({
-      data: { invoiceId, amount: parseFloat(amount), method }
-    })
-
-    // Marquer la facture comme payée
-    const invoice = await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { status: 'paid', paidAt: new Date() }
+    const { payment, invoice } = await createPaymentAndMarkInvoicePaid({
+      invoiceId: Number(invoiceId),
+      amount: Number(amount),
+      method,
     })
 
     // Publier PaymentConfirmed
@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
     })
 
     return Response.json(payment, { status: 201 })
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('Billing POST /api/payments failed:', error)
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Erreur serveur' },
+      { status: 500 }
+    )
   }
 }
