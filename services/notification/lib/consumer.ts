@@ -1,5 +1,5 @@
 import amqplib from 'amqplib'
-import { prisma } from './prisma'
+import { createNotification } from './notification-store'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'
 const EXCHANGE = 'sfmc.events'
@@ -27,13 +27,11 @@ export async function startConsumer() {
     ch.consume(q1.queue, async (msg) => {
       if (!msg) return
       const data = JSON.parse(msg.content.toString())
-      await prisma.notification.create({
-        data: {
-          type: 'order.created',
-          message: `Nouvelle commande #${data.orderId} : ${data.quantity}x ${data.productName}`,
-          recipient: data.clientName,
-          status: 'sent'
-        }
+      await createNotification({
+        type: 'order.created',
+        message: `Nouvelle commande #${data.orderId} : ${data.quantity}x ${data.productName}`,
+        recipient: data.clientName,
+        status: 'sent'
       })
       console.log(`📧 Notification OrderCreated → ${data.clientName}`)
       ch.ack(msg)
@@ -42,13 +40,11 @@ export async function startConsumer() {
     ch.consume(q2.queue, async (msg) => {
       if (!msg) return
       const data = JSON.parse(msg.content.toString())
-      await prisma.notification.create({
-        data: {
-          type: 'payment.confirmed',
-          message: `Paiement confirmé pour la commande #${data.orderId} — ${data.amount} FCFA`,
-          recipient: data.clientName,
-          status: 'sent'
-        }
+      await createNotification({
+        type: 'payment.confirmed',
+        message: `Paiement confirmé pour la commande #${data.orderId} — ${data.amount} FCFA`,
+        recipient: data.clientName,
+        status: 'sent'
       })
       console.log(`📧 Notification PaymentConfirmed → ${data.clientName}`)
       ch.ack(msg)
@@ -57,13 +53,11 @@ export async function startConsumer() {
     ch.consume(q3.queue, async (msg) => {
       if (!msg) return
       const data = JSON.parse(msg.content.toString())
-      await prisma.notification.create({
-        data: {
-          type: 'stock.alert',
-          message: `⚠️ Stock critique : ${data.productName} — ${data.quantity} unités restantes`,
-          recipient: 'gestionnaire@sfmc.bj',
-          status: 'sent'
-        }
+      await createNotification({
+        type: 'stock.alert',
+        message: `⚠️ Stock critique : ${data.productName} — ${data.quantity} unités restantes`,
+        recipient: 'gestionnaire@sfmc.bj',
+        status: 'sent'
       })
       console.log(`📧 Notification StockAlert → gestionnaire@sfmc.bj`)
       ch.ack(msg)

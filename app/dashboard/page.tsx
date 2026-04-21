@@ -43,6 +43,10 @@ export default function DashboardPage() {
       {/* Cards */}
       <h2 className="text-lg font-semibold mb-4">Accès rapide</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <Link href="/dashboard/users" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Utilisateurs</h3>
+          <p className="text-sm text-zinc-500">Administrez les comptes, les rôles et les coordonnées du User Service.</p>
+        </Link>
         <Link href="/dashboard/products" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
           <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Produits</h3>
           <p className="text-sm text-zinc-500">Gérez le catalogue de produits — création, modification, suppression.</p>
@@ -50,6 +54,22 @@ export default function DashboardPage() {
         <Link href="/dashboard/stock" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
           <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Stock & Inventaire</h3>
           <p className="text-sm text-zinc-500">Suivez les niveaux de stock et enregistrez les mouvements (entrées/sorties).</p>
+        </Link>
+        <Link href="/dashboard/orders" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Commandes</h3>
+          <p className="text-sm text-zinc-500">Créez des commandes client et suivez leur progression de pending à delivered.</p>
+        </Link>
+        <Link href="/dashboard/billing" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Facturation</h3>
+          <p className="text-sm text-zinc-500">Créez des factures à partir des commandes et confirmez les paiements côté billing.</p>
+        </Link>
+        <Link href="/dashboard/production" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Production</h3>
+          <p className="text-sm text-zinc-500">Planifiez des lots de fabrication et faites progresser les batches jusqu’à completed.</p>
+        </Link>
+        <Link href="/dashboard/notifications" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Notifications</h3>
+          <p className="text-sm text-zinc-500">Consultez les messages issus des événements order.created, payment.confirmed et stock.alert.</p>
         </Link>
         <Link href="/dashboard/profile" className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
           <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Mon profil</h3>

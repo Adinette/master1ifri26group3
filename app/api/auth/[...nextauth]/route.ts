@@ -1,11 +1,10 @@
-import NextAuth from "next-auth"
+import NextAuth, { type NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
-import { JWT } from "next-auth/jwt"
 import { prisma } from "@/app/lib/prisma"
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt" as const,
   },
@@ -45,9 +44,13 @@ export const authOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account }: { user: any; account: any }) {
+    async signIn({ user, account }) {
       // Création automatique du compte pour les connexions Google
       if (account?.provider === "google") {
+        if (!user.email) {
+          return false
+        }
+
         const existingUser = await prisma.users.findUnique({
           where: { email: user.email }
         })
@@ -65,16 +68,23 @@ export const authOptions = {
       }
       return true
     },
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.sub = user.id
       }
       return token
     },
-    async session({ session, token }: { session: any; token: JWT }) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: token.sub ?? "",
+          },
+        }
       }
+
       return session
     }
   },
