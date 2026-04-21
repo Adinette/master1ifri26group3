@@ -38,7 +38,28 @@ type Production = {
   status: string
 }
 
+type ServiceStatus = {
+  available: boolean
+  error: string | null
+}
+
+const serviceLabels = {
+  orders: 'Order Service',
+  stock: 'Inventory Service',
+  invoices: 'Billing Service',
+  notifications: 'Notification Service',
+  production: 'Production Service',
+} as const
+
 type ReportingPayload = {
+  partial: boolean
+  services: {
+    orders: ServiceStatus
+    stock: ServiceStatus
+    invoices: ServiceStatus
+    notifications: ServiceStatus
+    production: ServiceStatus
+  }
   summary: {
     totalOrders: number
     totalStockItems: number
@@ -85,6 +106,9 @@ export default function ReportingPage() {
   }, [])
 
   const lowStockItems = data?.stock.filter((item) => item.quantity <= item.minThreshold) ?? []
+  const unavailableServices = data
+    ? Object.entries(data.services).filter(([, service]) => !service.available)
+    : []
 
   return (
     <div className="p-6 lg:p-10 space-y-8">
@@ -105,6 +129,18 @@ export default function ReportingPage() {
         </div>
       ) : data ? (
         <>
+          {data.partial && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/10 dark:text-amber-200">
+              <p className="text-sm font-semibold">Affichage partiel du reporting</p>
+              <p className="text-sm mt-1">
+                Certains services ne répondent pas actuellement :{' '}
+                {unavailableServices
+                  .map(([serviceName]) => serviceLabels[serviceName as keyof typeof serviceLabels])
+                  .join(', ')}.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
               <p className="text-sm text-zinc-500 mb-1">Commandes</p>
