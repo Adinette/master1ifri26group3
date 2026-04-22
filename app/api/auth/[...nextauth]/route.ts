@@ -3,12 +3,9 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
 import { prisma } from "@/app/lib/prisma"
+import { resolveAuthSessionConfig } from "@/app/lib/auth-session-config"
 
-const defaultSessionMaxAgeSeconds = 30 * 60
-const parsedSessionMaxAge = Number.parseInt(process.env.NEXTAUTH_SESSION_MAX_AGE_SECONDS ?? "", 10)
-const sessionMaxAgeSeconds = Number.isFinite(parsedSessionMaxAge) && parsedSessionMaxAge > 0
-  ? parsedSessionMaxAge
-  : defaultSessionMaxAgeSeconds
+const { sessionMaxAgeSeconds } = resolveAuthSessionConfig()
 
 export const authOptions: NextAuthOptions = {
   session: {

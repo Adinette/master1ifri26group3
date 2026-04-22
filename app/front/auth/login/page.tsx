@@ -12,7 +12,12 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const justRegistered = searchParams.get("registered") === "true"
-  const sessionExpired = searchParams.get("reason") === "session-expired"
+  const sessionReason = searchParams.get("reason")
+  const sessionMessage = sessionReason === "session-idle-expired"
+    ? "Votre session a ete fermee apres une periode d inactivite. Connectez-vous a nouveau."
+    : sessionReason === "session-expired"
+      ? "Votre session a expire. Connectez-vous a nouveau."
+      : ""
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,9 +50,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        {sessionExpired && (
+        {sessionMessage && (
           <div className="bg-amber-100 text-amber-800 p-3 rounded mb-4 text-sm text-center">
-            Votre session a expiré. Connectez-vous à nouveau.
+            {sessionMessage}
           </div>
         )}
 
