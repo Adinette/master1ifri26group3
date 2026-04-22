@@ -4,9 +4,19 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
 import { prisma } from "@/app/lib/prisma"
 
+const defaultSessionMaxAgeSeconds = 30 * 60
+const parsedSessionMaxAge = Number.parseInt(process.env.NEXTAUTH_SESSION_MAX_AGE_SECONDS ?? "", 10)
+const sessionMaxAgeSeconds = Number.isFinite(parsedSessionMaxAge) && parsedSessionMaxAge > 0
+  ? parsedSessionMaxAge
+  : defaultSessionMaxAgeSeconds
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt" as const,
+    maxAge: sessionMaxAgeSeconds,
+  },
+  jwt: {
+    maxAge: sessionMaxAgeSeconds,
   },
   providers: [
     GoogleProvider({

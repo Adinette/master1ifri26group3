@@ -1,111 +1,121 @@
 import Link from "next/link";
+import { releaseTracks } from "./lib/release-hub";
+import { serviceDefinitions } from "./lib/service-monitoring";
 
 export default function Home() {
   return (
-    <div className="bg-zinc-50 dark:bg-black">
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-            Projet <span className="text-blue-600">TWM</span>
-          </h1>
-          <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-10">
-            Application web moderne construite avec Next.js, Prisma et PostgreSQL.
-            Microservices, authentification et tableau de bord intégré.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/front/auth/register"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
-            >
-              Commencer
-            </Link>
-            <Link
-              href="/front/auth/login"
-              className="border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
-            >
-              Se connecter
-            </Link>
+    <div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="grid items-center gap-8 xl:grid-cols-[1.15fr,0.85fr]">
+          <div>
+            <p className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-amber-800">
+              Phase 9 · UI/UX & livraison
+            </p>
+            <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-zinc-950 lg:text-7xl dark:text-white">
+              TWM devient plus lisible pour l equipe comme pour les livraisons.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+              Plateforme microservices pour SFMC Benin avec front modernise, supervision coherente et centre de versions pour reprendre la bonne branche sans confusion.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/front/auth/register"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-base font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
+              >
+                Demarrer sur le projet
+              </Link>
+              <Link
+                href="/front/auth/login"
+                className="inline-flex items-center justify-center rounded-full border border-zinc-300 bg-white/80 px-6 py-3 text-base font-semibold text-zinc-800 transition hover:bg-white dark:border-white/10 dark:bg-slate-900/70 dark:text-zinc-100 dark:hover:bg-slate-900"
+              >
+                Se connecter
+              </Link>
+            </div>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/70 bg-(--surface-strong) p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-(--surface)">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Microservices</p>
+                <p className="mt-2 text-3xl font-semibold text-zinc-950 dark:text-white">{serviceDefinitions.length}</p>
+              </div>
+              <div className="rounded-3xl border border-white/70 bg-(--surface-strong) p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-(--surface)">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Branches diffusees</p>
+                <p className="mt-2 text-3xl font-semibold text-zinc-950 dark:text-white">{releaseTracks.length}</p>
+              </div>
+              <div className="rounded-3xl border border-white/70 bg-(--surface-strong) p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-(--surface)">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">PR actives</p>
+                <p className="mt-2 text-3xl font-semibold text-zinc-950 dark:text-white">{releaseTracks.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-4xl border border-white/60 bg-(--surface) p-6 shadow-xl backdrop-blur dark:border-white/10">
+            <p className="text-xs uppercase tracking-[0.28em] text-zinc-400 dark:text-zinc-500">Dernieres versions</p>
+            <div className="mt-5 space-y-4">
+              {releaseTracks.map((track) => (
+                <article key={track.id} className="rounded-3xl border border-zinc-200/80 bg-white/80 p-5 dark:border-white/10 dark:bg-slate-900/70">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-zinc-600 dark:bg-slate-800 dark:text-zinc-300">
+                      {track.badge}
+                    </span>
+                    <a href={track.prUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200">
+                      PR #{track.prNumber}
+                    </a>
+                  </div>
+                  <h2 className="mt-3 text-lg font-semibold text-zinc-950 dark:text-white">{track.title}</h2>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{track.summary}</p>
+                  <p className="mt-4 font-mono text-xs text-zinc-500 dark:text-zinc-400">{track.branch}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-white dark:bg-zinc-900 border-y border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            Fonctionnalités principales
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Authentification sécurisée</h3>
-              <p className="text-sm text-zinc-500">
-                Connexion par email/mot de passe et Google OAuth. Mots de passe hashés avec bcrypt.
+      <section className="border-y border-white/60 bg-white/60 backdrop-blur dark:border-white/10 dark:bg-slate-950/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-[28px] border border-white/70 bg-(--surface) p-6 shadow-sm dark:border-white/10">
+              <h3 className="text-xl font-semibold text-zinc-950 dark:text-white">Authentification robuste</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-600 dark:text-zinc-400">
+                Credentials et Google OAuth, middleware de protection et parcours d acces plus clairs.
               </p>
             </div>
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Base de données PostgreSQL</h3>
-              <p className="text-sm text-zinc-500">
-                ORM Prisma 7 avec driver adapter pattern. Schéma moderne et optimisé.
+            <div className="rounded-[28px] border border-white/70 bg-(--surface) p-6 shadow-sm dark:border-white/10">
+              <h3 className="text-xl font-semibold text-zinc-950 dark:text-white">Microservices visibles</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-600 dark:text-zinc-400">
+                Services, reporting, billing, order et notifications sont exposes de facon plus lisible dans le dashboard.
               </p>
             </div>
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Next.js 16 & Turbopack</h3>
-              <p className="text-sm text-zinc-500">
-                Rendu serveur, routes API, middleware de protection. Performance maximale.
+            <div className="rounded-[28px] border border-white/70 bg-(--surface) p-6 shadow-sm dark:border-white/10">
+              <h3 className="text-xl font-semibold text-zinc-950 dark:text-white">Centre de livraison</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-600 dark:text-zinc-400">
+                Les collaborateurs savent quelle branche recuperer et quelle PR consulter pour repartir sur la bonne version.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stack technique */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-          Stack technique
-        </h2>
-        <div className="flex flex-wrap justify-center gap-4">
-          {["Next.js 16", "React 19", "TypeScript", "Prisma 7", "PostgreSQL 18", "NextAuth", "Tailwind CSS 4", "bcrypt"].map((tech) => (
-            <span
-              key={tech}
-              className="px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm font-medium"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-blue-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Prêt à commencer ?
-          </h2>
-          <p className="text-blue-100 mb-8 text-lg">
-            Créez votre compte et accédez au tableau de bord.
-          </p>
-          <Link
-            href="/front/auth/register"
-            className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
-          >
-            Créer un compte gratuit
-          </Link>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+        <div className="rounded-4xl bg-slate-950 px-6 py-10 text-white lg:px-8">
+          <div className="grid gap-8 xl:grid-cols-[1.1fr,0.9fr]">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-sky-200/80">Collaboration</p>
+              <h2 className="mt-3 text-3xl font-semibold">Reprendre proprement la derniere version</h2>
+              <p className="mt-4 max-w-2xl text-base text-slate-300">
+                La phase 9 met l accent sur la recuperation des bonnes branches, la lecture des PR et la reduction des ambiguities entre Phase 7 partagee et consolidation Phase 8.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row xl:justify-end">
+              <Link href="/front/auth/login" className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                Acceder au dashboard
+              </Link>
+              <a href={releaseTracks[0]?.prUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+                Ouvrir la PR phase 7
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

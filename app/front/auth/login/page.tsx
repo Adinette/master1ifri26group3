@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const justRegistered = searchParams.get("registered") === "true"
+  const sessionExpired = searchParams.get("reason") === "session-expired"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,6 +42,12 @@ export default function LoginPage() {
         {justRegistered && (
           <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm text-center">
             Compte créé avec succès ! Connectez-vous.
+          </div>
+        )}
+
+        {sessionExpired && (
+          <div className="bg-amber-100 text-amber-800 p-3 rounded mb-4 text-sm text-center">
+            Votre session a expiré. Connectez-vous à nouveau.
           </div>
         )}
 
