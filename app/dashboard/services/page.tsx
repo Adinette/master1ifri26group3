@@ -1,18 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
-const services = [
-  { name: "Auth Service",         port: 3001, route: "/api/auth" },
-  { name: "User Service",         port: 3002, route: "/api/users" },
-  { name: "Product Service",      port: 3003, route: "/api/products" },
-  { name: "Inventory Service",    port: 3004, route: "/api/inventory" },
-  { name: "Order Service",        port: 3005, route: "/api/orders" },
-  { name: "Production Service",   port: 3006, route: "/api/production" },
-  { name: "Billing Service",      port: 3007, route: "/api/billing" },
-  { name: "Notification Service", port: 3008, route: "/api/notify" },
-  { name: "Reporting Service",    port: 3009, route: "/api/reports" },
-]
+import { serviceDefinitions } from "@/app/lib/service-monitoring"
 
 type Status = "checking" | "online" | "offline"
 
@@ -20,7 +9,7 @@ export default function ServicesPage() {
   const [kongStatus, setKongStatus] = useState<Status>("checking")
   const [rabbitStatus, setRabbitStatus] = useState<Status>("checking")
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, Status>>(
-    Object.fromEntries(services.map(s => [s.name, "checking"]))
+    Object.fromEntries(serviceDefinitions.map((service) => [service.name, "checking"]))
   )
 
   useEffect(() => {
@@ -43,7 +32,7 @@ export default function ServicesPage() {
         }
       })
       .catch(() => {
-        setServiceStatuses(Object.fromEntries(services.map(s => [s.name, "offline"])))
+        setServiceStatuses(Object.fromEntries(serviceDefinitions.map((service) => [service.name, "offline"])))
       })
   }, [])
 
@@ -82,13 +71,13 @@ export default function ServicesPage() {
       <div>
         <h2 className="text-lg font-semibold mb-3">Microservices</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map(s => (
-            <div key={s.name} className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
+          {serviceDefinitions.map((service) => (
+            <div key={service.name} className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
               <div>
-                <p className="font-medium">{s.name}</p>
-                <p className="text-sm text-gray-500">:{s.port} → {s.route}</p>
+                <p className="font-medium">{service.name}</p>
+                <p className="text-sm text-gray-500">:{service.port} → {service.path}</p>
               </div>
-              {badge(serviceStatuses[s.name])}
+              {badge(serviceStatuses[service.name])}
             </div>
           ))}
         </div>
