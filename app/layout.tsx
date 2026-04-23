@@ -5,6 +5,8 @@ import Providers from "./providers";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { resolveAuthSessionConfig } from "./lib/auth-session-config";
+import ConditionalFooter from "./components/ConditionalFooter";
+import ConditionalNavbar from "./components/ConditionalNavbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +40,9 @@ export default function RootLayout({
           idleTimeoutSeconds={sessionConfig.idleTimeoutSeconds}
           idleWarningSeconds={sessionConfig.idleWarningSeconds}
         >
-          <Navbar />
+          <ConditionalNavbar />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <ConditionalFooter />
         </Providers>
       </body>
     </html>

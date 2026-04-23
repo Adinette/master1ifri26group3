@@ -13,23 +13,21 @@ type NavItem = {
 }
 
 const navSections: Array<{ title: string; items: NavItem[] }> = [
-  {
-    title: 'Pilotage',
+   {
+    title: 'Tableau de bord',
     items: [
       { label: "Vue d'ensemble", href: '/dashboard', short: 'VD', tone: 'from-sky-500 to-blue-600' },
-      { label: 'Versions', href: '/dashboard/versions', short: 'V9', tone: 'from-amber-500 to-orange-500' },
-      { label: 'Microservices', href: '/dashboard/services', short: 'MS', tone: 'from-emerald-500 to-teal-600' },
-      { label: 'Reporting', href: '/dashboard/reporting', short: 'RP', tone: 'from-indigo-500 to-cyan-500' },
     ],
   },
   {
     title: 'Operations',
     items: [
       { label: 'Produits', href: '/dashboard/products', short: 'PD', tone: 'from-fuchsia-500 to-pink-500' },
+      { label: 'Production', href: '/dashboard/production', short: 'PR', tone: 'from-violet-500 to-indigo-600' },
       { label: 'Stock', href: '/dashboard/stock', short: 'ST', tone: 'from-lime-500 to-green-600' },
       { label: 'Commandes', href: '/dashboard/orders', short: 'CM', tone: 'from-orange-500 to-rose-500' },
       { label: 'Facturation', href: '/dashboard/billing', short: 'FC', tone: 'from-cyan-500 to-sky-600' },
-      { label: 'Production', href: '/dashboard/production', short: 'PR', tone: 'from-violet-500 to-indigo-600' },
+      { label: 'Reporting', href: '/dashboard/reporting', short: 'RP', tone: 'from-indigo-500 to-cyan-500' },
       { label: 'Notifications', href: '/dashboard/notifications', short: 'NT', tone: 'from-rose-500 to-red-500' },
     ],
   },
@@ -39,6 +37,13 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
       { label: 'Utilisateurs', href: '/dashboard/users', short: 'US', tone: 'from-slate-600 to-slate-800' },
       { label: 'Mon profil', href: '/dashboard/profile', short: 'MP', tone: 'from-blue-500 to-indigo-600' },
       { label: 'Parametres', href: '/dashboard/settings', short: 'PM', tone: 'from-zinc-500 to-zinc-700' },
+    ],
+  },
+   {
+    title: 'Pilotage',
+    items: [
+      { label: 'Versions', href: '/dashboard/versions', short: 'V9', tone: 'from-amber-500 to-orange-500' },
+      { label: 'Microservices', href: '/dashboard/services', short: 'MS', tone: 'from-emerald-500 to-teal-600' },
     ],
   },
 ]
@@ -86,7 +91,7 @@ export default function DashboardSidebar() {
 
       <aside className="hidden w-80 shrink-0 border-r border-white/70 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70 lg:flex lg:min-h-[calc(100vh-4rem)] lg:flex-col lg:justify-between">
         <div className="p-6">
-          <div className="rounded-[28px] bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 dark:bg-slate-900">
+          {/* <div className="rounded-[28px] bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.32em] text-sky-200/80">Tableau de bord</p>
@@ -100,17 +105,15 @@ export default function DashboardSidebar() {
             <p className="mt-4 text-sm text-slate-300">
               Oriente l equipe vers les bons modules, les bonnes branches et les bons points de reprise.
             </p>
-          </div>
-
-          <div className="mt-6 flex items-center gap-3 rounded-3xl border border-white/70 bg-white/85 px-4 py-4 shadow-sm dark:border-white/10 dark:bg-slate-900/90">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-indigo-600 text-white">
-              <span className="text-sm font-semibold">{session?.user?.name?.charAt(0).toUpperCase() || 'U'}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-white">{session?.user?.name}</p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{session?.user?.email}</p>
-            </div>
-          </div>
+          </div> */}
+            {/* Logo */}
+                    <Link href="/" className="flex items-center gap-2 border-none">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">T</span>
+                      </div>
+                      <span className="font-bold text-lg">TWM</span>
+                    </Link>
+          
 
           <nav className="mt-6 space-y-6">
             {navSections.map((section) => (
@@ -142,11 +145,11 @@ export default function DashboardSidebar() {
         </div>
 
         <div className="border-t border-white/70 p-5 dark:border-white/10">
-          <Link href="/dashboard/versions" className="block rounded-3xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950 transition-colors hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-100 dark:hover:bg-amber-400/15">
+          {/* <Link href="/dashboard/versions" className="block rounded-3xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950 transition-colors hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-100 dark:hover:bg-amber-400/15">
             <p className="text-xs uppercase tracking-[0.28em] text-amber-700 dark:text-amber-300">Recuperation</p>
             <p className="mt-1 font-semibold">Voir les dernieres versions partagees</p>
             <p className="mt-2 text-xs text-amber-800/80 dark:text-amber-100/70">PR {releaseTracks[0]?.prNumber} et PR {releaseTracks[1]?.prNumber} pretes pour l equipe.</p>
-          </Link>
+          </Link> */}
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

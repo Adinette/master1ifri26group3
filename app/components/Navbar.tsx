@@ -36,12 +36,15 @@ export default function Navbar() {
             {session ? (
               <div className="flex items-center gap-3">
                 <Link href="/dashboard/profile" className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-blue-600">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 dark:text-blue-400 font-medium text-xs">
-                      {session.user?.name?.charAt(0).toUpperCase() || "U"}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-indigo-600 text-white">
+                      <span className="text-sm font-semibold">{session?.user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">{session?.user?.name}</p>
+                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{session?.user?.email}</p>
+                    </div>
                   </div>
-                  <span>{session.user?.name}</span>
                 </Link>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}

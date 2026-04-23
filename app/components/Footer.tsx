@@ -55,7 +55,7 @@ export default function Footer() {
 
         <div className="border-t border-zinc-200 dark:border-zinc-800 mt-8 pt-6 text-center">
           <p className="text-xs text-zinc-400">
-            © {new Date().getFullYear()} Projet TWM — SFMC Bénin. Groupe Adinette.
+            © {new Date().getFullYear()} Projet TWM — SFMC Bénin. Groupe 5.
           </p>
         </div>
       </div>
