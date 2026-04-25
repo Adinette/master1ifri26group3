@@ -24,8 +24,9 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
     return Response.json(users)
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('[User Service GET /api/users] Error:', error)
+    return Response.json({ error: 'Erreur serveur', details: String(error) }, { status: 500 })
   }
 }
 
