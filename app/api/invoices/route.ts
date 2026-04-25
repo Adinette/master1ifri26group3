@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { requireAdminSession } from '@/app/lib/require-admin-session'
 
 const BILLING_SERVICE = process.env.BILLING_SERVICE_URL || 'http://localhost:3007'
 
@@ -13,6 +14,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const { errorResponse } = await requireAdminSession()
+  if (errorResponse) return errorResponse
+
   try {
     const body = await req.json()
     const res = await fetch(`${BILLING_SERVICE}/api/invoices`, {

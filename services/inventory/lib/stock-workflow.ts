@@ -162,6 +162,16 @@ export async function reserveStockForOrder(input: ReserveStockInput) {
 
 export async function applyStockMovement(input: MovementInput) {
   return prisma.$transaction(async (tx) => {
+    // S'assurer que l'entrepôt existe, sinon le créer
+    const warehouseRecord = await tx.warehouse.upsert({
+      where: { id: input.warehouseId },
+      update: {},
+      create: {
+        id: input.warehouseId,
+        name: input.warehouse ?? `Entrepôt ${input.warehouseId}`,
+      },
+    })
+
     const existingStock = await tx.stock.findFirst({
       where: { productId: input.productId, warehouseId: input.warehouseId },
     })
@@ -191,7 +201,7 @@ export async function applyStockMovement(input: MovementInput) {
         movement,
         stock: {
           ...updatedStock,
-          warehouse: existingStock.warehouse,
+          warehouse: warehouseRecord.name,
           minThreshold: existingStock.minThreshold,
         },
       }
@@ -207,7 +217,6 @@ export async function applyStockMovement(input: MovementInput) {
             productId: input.productId,
             productName: input.productName,
             warehouseId: input.warehouseId,
-            warehouse: input.warehouse ?? `Entrepôt ${input.warehouseId}`,
             quantity: input.quantity,
             minThreshold: 10,
           },
@@ -228,7 +237,7 @@ export async function applyStockMovement(input: MovementInput) {
       movement,
       stock: {
         ...targetStock,
-        warehouse: existingStock?.warehouse ?? input.warehouse ?? `Entrepôt ${input.warehouseId}`,
+        warehouse: warehouseRecord.name,
         minThreshold: existingStock?.minThreshold ?? 10,
       },
     }

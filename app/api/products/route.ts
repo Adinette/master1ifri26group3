@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { requireAdminSession } from '@/app/lib/require-admin-session'
 
 const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003'
 
@@ -13,6 +14,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const { errorResponse } = await requireAdminSession()
+  if (errorResponse) return errorResponse
+
   try {
     const body = await req.json()
     const res = await fetch(`${PRODUCT_SERVICE}/api/products`, {

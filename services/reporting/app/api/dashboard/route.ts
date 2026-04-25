@@ -8,6 +8,20 @@ type StatusEntity = {
   status?: string
 }
 
+type OrderEntity = StatusEntity & {
+  totalPrice?: number
+}
+
+type StockEntity = StatusEntity & {
+  quantity?: number
+  minThreshold?: number
+  productName?: string
+}
+
+type InvoiceEntity = StatusEntity & {
+  amount?: number
+}
+
 type CollectionEntity = Record<string, unknown> & StatusEntity
 
 async function fetchCollection<T>(url: string): Promise<ServiceResult<T>> {
@@ -40,9 +54,9 @@ function countByStatus<T extends StatusEntity>(items: T[], status: string) {
 
 export async function GET() {
   const [ordersResult, stockResult, invoicesResult, notificationsResult, productionResult] = await Promise.all([
-    fetchCollection<CollectionEntity>('http://localhost:3005/api/orders'),
-    fetchCollection<CollectionEntity>('http://localhost:3004/api/stock'),
-    fetchCollection<CollectionEntity>('http://localhost:3007/api/invoices'),
+    fetchCollection<OrderEntity>('http://localhost:3005/api/orders'),
+    fetchCollection<StockEntity>('http://localhost:3004/api/stock'),
+    fetchCollection<InvoiceEntity>('http://localhost:3007/api/invoices'),
     fetchCollection<CollectionEntity>('http://localhost:3008/api/notifications'),
     fetchCollection<CollectionEntity>('http://localhost:3006/api/production'),
   ])
@@ -58,6 +72,53 @@ export async function GET() {
     stock: { available: stockResult.available, error: stockResult.error },
     invoices: { available: invoicesResult.available, error: invoicesResult.error },
     notifications: { available: notificationsResult.available, error: notificationsResult.error },
+    production: { available: productionResult.available, error: productionResult.error },
+  }
+
+  const totalRevenue = invoices
+    .filter((inv) => inv.status === 'paid')
+    .reduce((sum, inv) => sum + (inv.amount ?? 0), 0)
+
+  const pendingRevenue = invoices
+    .filter((inv) => inv.status === 'pending')
+    .reduce((sum, inv) => sum + (inv.amount ?? 0), 0)
+
+  const lowStockItems = stock.filter(
+    (s) => typeof s.quantity === 'number' && typeof s.minThreshold === 'number' && s.quantity <= s.minThreshold
+  )
+
+  return Response.json({
+    partial: Object.values(services).some((service) => !service.available),
+    services,
+    summary: {
+      totalOrders: orders.length,
+      pendingOrders: countByStatus(orders, 'pending'),
+      validatedOrders: countByStatus(orders, 'validated'),
+      shippedOrders: countByStatus(orders, 'shipped'),
+      totalStockItems: stock.length,
+      lowStockItems: lowStockItems.length,
+      totalInvoices: invoices.length,
+      paidInvoices: countByStatus(invoices, 'paid'),
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      pendingRevenue: Math.round(pendingRevenue * 100) / 100,
+      totalNotifications: notifications.length,
+      totalBatches: production.length,
+      completedBatches: countByStatus(production, 'completed'),
+    },
+    alerts: {
+      lowStock: lowStockItems.map((s) => ({
+        productName: s.productName,
+        quantity: s.quantity,
+        minThreshold: s.minThreshold,
+      })),
+    },
+    orders,
+    stock,
+    invoices,
+    notifications,
+    production,
+  })
+}
     production: { available: productionResult.available, error: productionResult.error },
   }
 

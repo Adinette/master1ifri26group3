@@ -3,6 +3,7 @@ import { publishEvent } from '@/lib/rabbitmq'
 import { NextRequest } from 'next/server'
 
 const INVENTORY_SERVICE_URL = process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004'
+const BILLING_SERVICE_URL = process.env.BILLING_SERVICE_URL || 'http://localhost:3007'
 
 export async function GET() {
   try {
@@ -59,6 +60,28 @@ export async function POST(req: NextRequest) {
         status: orderStatus,
       }
     })
+
+    // Créer automatiquement une facture si la commande est validée.
+    if (orderStatus === 'validated') {
+      const dueDate = new Date()
+      dueDate.setDate(dueDate.getDate() + 30)
+      try {
+        await fetch(`${BILLING_SERVICE_URL}/api/invoices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            clientName: order.clientName,
+            amount: order.totalPrice,
+            dueDate: dueDate.toISOString(),
+          }),
+          cache: 'no-store',
+        })
+      } catch {
+        // Non bloquant : la commande est créée même si la facturation échoue
+        console.warn('Billing Service indisponible, facture non créée pour order', order.id)
+      }
+    }
 
     // Publier l'événement OrderCreated vers RabbitMQ pour notification/reporting.
     await publishEvent('order.created', {
