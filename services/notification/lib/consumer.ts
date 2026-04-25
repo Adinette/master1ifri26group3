@@ -3,8 +3,16 @@ import { createNotification } from './notification-store'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'
 const EXCHANGE = 'sfmc.events'
+let consumerStarted = false
+let consumerPromise: Promise<void> | null = null
 
 export async function startConsumer() {
+  if (consumerStarted && consumerPromise) {
+    return consumerPromise
+  }
+
+  consumerStarted = true
+  consumerPromise = (async () => {
   try {
     const conn = await amqplib.connect(RABBITMQ_URL)
     const ch = await conn.createChannel()
@@ -55,7 +63,10 @@ export async function startConsumer() {
       const data = JSON.parse(msg.content.toString())
       await createNotification({
         type: 'stock.alert',
-        message: `⚠️ Stock critique : ${data.productName} — ${data.quantity} unités restantes`,
+        message:
+          data.trigger === 'insufficient-stock'
+            ? `⚠️ Stock insuffisant : ${data.productName} — demandé ${data.requestedQuantity}, disponible ${data.availableQuantity ?? data.currentQuantity}`
+            : `⚠️ Stock critique : ${data.productName} — ${data.currentQuantity} unités restantes`,
         recipient: 'gestionnaire@sfmc.bj',
         status: 'sent'
       })
@@ -64,7 +75,14 @@ export async function startConsumer() {
     })
 
   } catch (error) {
+    consumerStarted = false
+    consumerPromise = null
     console.error('❌ Erreur consumer Notification :', error)
-    setTimeout(startConsumer, 5000)
+    setTimeout(() => {
+      void startConsumer()
+    }, 5000)
   }
+  })()
+
+  return consumerPromise
 }

@@ -3,47 +3,48 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { releaseTracks } from "@/app/lib/release-hub"
 
 type NavItem = {
   label: string
   href: string
-  short: string
+  icon: string
   tone: string
 }
 
 const navSections: Array<{ title: string; items: NavItem[] }> = [
-   {
-    title: 'Tableau de bord',
+  {
+    title: 'Accueil',
     items: [
-      { label: "Vue d'ensemble", href: '/dashboard', short: 'VD', tone: 'from-sky-500 to-blue-600' },
+      { label: "Tableau de bord", href: '/dashboard', icon: '🏠', tone: 'from-sky-500 to-blue-600' },
     ],
   },
   {
-    title: 'Operations',
+    title: 'Mon espace',
     items: [
-      { label: 'Produits', href: '/dashboard/products', short: 'PD', tone: 'from-fuchsia-500 to-pink-500' },
-      { label: 'Production', href: '/dashboard/production', short: 'PR', tone: 'from-violet-500 to-indigo-600' },
-      { label: 'Stock', href: '/dashboard/stock', short: 'ST', tone: 'from-lime-500 to-green-600' },
-      { label: 'Commandes', href: '/dashboard/orders', short: 'CM', tone: 'from-orange-500 to-rose-500' },
-      { label: 'Facturation', href: '/dashboard/billing', short: 'FC', tone: 'from-cyan-500 to-sky-600' },
-      { label: 'Reporting', href: '/dashboard/reporting', short: 'RP', tone: 'from-indigo-500 to-cyan-500' },
-      { label: 'Notifications', href: '/dashboard/notifications', short: 'NT', tone: 'from-rose-500 to-red-500' },
+      { label: 'Mes commandes', href: '/dashboard/orders', icon: '📦', tone: 'from-orange-400 to-rose-500' },
+      { label: 'Mes factures', href: '/dashboard/billing', icon: '🧾', tone: 'from-cyan-500 to-sky-600' },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: '🔔', tone: 'from-rose-400 to-red-500' },
     ],
   },
   {
-    title: 'Organisation',
+    title: 'Catalogue',
     items: [
-      { label: 'Utilisateurs', href: '/dashboard/users', short: 'US', tone: 'from-slate-600 to-slate-800' },
-      { label: 'Mon profil', href: '/dashboard/profile', short: 'MP', tone: 'from-blue-500 to-indigo-600' },
-      { label: 'Parametres', href: '/dashboard/settings', short: 'PM', tone: 'from-zinc-500 to-zinc-700' },
+      { label: 'Produits', href: '/dashboard/products', icon: '🛒', tone: 'from-fuchsia-500 to-pink-500' },
+      { label: 'Stock disponible', href: '/dashboard/stock', icon: '🏪', tone: 'from-lime-500 to-green-600' },
     ],
   },
-   {
-    title: 'Pilotage',
+  {
+    title: 'Suivi',
     items: [
-      { label: 'Versions', href: '/dashboard/versions', short: 'V9', tone: 'from-amber-500 to-orange-500' },
-      { label: 'Microservices', href: '/dashboard/services', short: 'MS', tone: 'from-emerald-500 to-teal-600' },
+      { label: 'Production', href: '/dashboard/production', icon: '🏭', tone: 'from-violet-500 to-indigo-600' },
+      { label: 'Rapports', href: '/dashboard/reporting', icon: '📊', tone: 'from-indigo-500 to-cyan-500' },
+    ],
+  },
+  {
+    title: 'Compte',
+    items: [
+      { label: 'Mon profil', href: '/dashboard/profile', icon: '👤', tone: 'from-blue-500 to-indigo-600' },
+      { label: 'Paramètres', href: '/dashboard/settings', icon: '⚙️', tone: 'from-zinc-500 to-zinc-700' },
     ],
   },
 ]
@@ -51,91 +52,79 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const quickNav = navSections.flatMap((section) => section.items).filter((item) =>
-    ['/dashboard', '/dashboard/versions', '/dashboard/services', '/dashboard/reporting', '/dashboard/orders'].includes(item.href)
+
+  const mobileQuickNav = navSections.flatMap((s) => s.items).filter((item) =>
+    ['/dashboard', '/dashboard/orders', '/dashboard/products', '/dashboard/notifications', '/dashboard/billing'].includes(item.href)
   )
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   return (
     <>
-      <div className="lg:hidden border-b border-white/60 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Phase 9</p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white">Navigation rapide</p>
+      {/* Mobile top bar */}
+      <div className="lg:hidden border-b border-blue-100 bg-white px-4 py-3">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-blue-800 shadow-md">
+              <span className="text-xs font-bold text-white">S</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-blue-900 leading-none">SFMC Bénin</p>
+              <p className="text-[10px] text-blue-500 leading-none mt-0.5">Portail client</p>
+            </div>
           </div>
-          <Link href="/dashboard/versions" className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 dark:border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-200">
-            {releaseTracks.length} versions partagees
-          </Link>
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {quickNav.map((item) => (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {mobileQuickNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-w-max items-center gap-2 rounded-full border px-3 py-2 text-xs transition-colors ${
+              className={`flex min-w-max items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                 isActive(item.href)
-                  ? 'border-slate-950 bg-slate-950 text-white dark:border-sky-400 dark:bg-sky-400/20 dark:text-sky-100'
-                  : 'border-zinc-200 bg-white/80 text-zinc-700 dark:border-zinc-800 dark:bg-slate-900/80 dark:text-zinc-300'
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : 'border-blue-100 bg-white text-zinc-600 hover:border-blue-300'
               }`}
             >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br ${item.tone} text-[10px] font-semibold tracking-[0.18em] text-white`}>
-                {item.short}
-              </span>
+              <span>{item.icon}</span>
               {item.label}
             </Link>
           ))}
         </div>
       </div>
 
-      <aside className="hidden w-80 shrink-0 border-r border-white/70 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70 lg:flex lg:min-h-[calc(100vh-4rem)] lg:flex-col lg:justify-between">
-        <div className="p-6">
-          {/* <div className="rounded-[28px] bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 dark:bg-slate-900">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-sky-200/80">Tableau de bord</p>
-                <h2 className="mt-2 text-xl font-semibold">TWM Delivery Hub</h2>
-              </div>
-              <div className="rounded-2xl bg-white/10 px-3 py-2 text-center">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-300">Phase</p>
-                <p className="text-lg font-semibold">9</p>
-              </div>
+      {/* Desktop sidebar */}
+      <aside className="hidden w-72 shrink-0 border-r border-blue-50 bg-white lg:flex lg:min-h-screen lg:flex-col lg:justify-between shadow-sm">
+        <div className="p-5">
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-3 mb-8 mt-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-blue-800 shadow-lg">
+              <span className="text-sm font-bold text-white">S</span>
             </div>
-            <p className="mt-4 text-sm text-slate-300">
-              Oriente l equipe vers les bons modules, les bonnes branches et les bons points de reprise.
-            </p>
-          </div> */}
-            {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 border-none">
-                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">T</span>
-                      </div>
-                      <span className="font-bold text-lg">TWM</span>
-                    </Link>
-          
+            <div>
+              <p className="text-base font-bold text-blue-900 leading-none">SFMC Bénin</p>
+              <p className="text-xs text-blue-400 leading-none mt-1">Portail client</p>
+            </div>
+          </Link>
 
-          <nav className="mt-6 space-y-6">
+          <nav className="space-y-6">
             {navSections.map((section) => (
               <div key={section.title}>
-                <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-[0.28em] text-zinc-400 dark:text-zinc-500">
+                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   {section.title}
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {section.items.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-2xl px-3 py-3 transition-all ${
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium ${
                         isActive(item.href)
-                          ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/10 dark:bg-slate-800'
-                          : 'text-zinc-700 hover:bg-white hover:shadow-sm dark:text-zinc-300 dark:hover:bg-slate-900/80'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                          : 'text-zinc-600 hover:bg-blue-50 hover:text-blue-800'
                       }`}
                     >
-                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${item.tone} text-[11px] font-semibold tracking-[0.18em] text-white`}>
-                        {item.short}
-                      </span>
-                      <span className="text-sm font-medium">{item.label}</span>
+                      <span className="text-base leading-none">{item.icon}</span>
+                      {item.label}
                     </Link>
                   ))}
                 </div>
@@ -144,18 +133,25 @@ export default function DashboardSidebar() {
           </nav>
         </div>
 
-        <div className="border-t border-white/70 p-5 dark:border-white/10">
-          {/* <Link href="/dashboard/versions" className="block rounded-3xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950 transition-colors hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-100 dark:hover:bg-amber-400/15">
-            <p className="text-xs uppercase tracking-[0.28em] text-amber-700 dark:text-amber-300">Recuperation</p>
-            <p className="mt-1 font-semibold">Voir les dernieres versions partagees</p>
-            <p className="mt-2 text-xs text-amber-800/80 dark:text-amber-100/70">PR {releaseTracks[0]?.prNumber} et PR {releaseTracks[1]?.prNumber} pretes pour l equipe.</p>
-          </Link> */}
-
+        {/* Footer */}
+        <div className="border-t border-blue-50 p-5">
+          {session && (
+            <div className="mb-3 flex items-center gap-3 rounded-xl bg-blue-50 px-3 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                {session.user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-blue-900">{session.user?.name ?? 'Utilisateur'}</p>
+                <p className="truncate text-xs text-blue-400">{session.user?.email ?? ''}</p>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-100 px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
           >
-            Deconnexion
+            <span>🚪</span>
+            Se déconnecter
           </button>
         </div>
       </aside>

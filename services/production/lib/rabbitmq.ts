@@ -11,8 +11,8 @@ export async function publishEvent(routingKey: string, data: object) {
     ch.publish(EXCHANGE, routingKey, Buffer.from(JSON.stringify(data)))
     await ch.close()
     await conn.close()
-    console.log(`✅ Événement publié : ${routingKey}`)
+    console.log(`Event published: ${routingKey}`)
   } catch (error) {
-    console.error('❌ Erreur RabbitMQ :', error)
+    console.error('RabbitMQ error:', error)
   }
 }

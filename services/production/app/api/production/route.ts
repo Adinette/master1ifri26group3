@@ -1,8 +1,11 @@
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const prisma = await getPrisma()
     const batches = await prisma.productionBatch.findMany({ orderBy: { createdAt: 'desc' } })
     return Response.json(batches)
   } catch {
@@ -12,6 +15,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const prisma = await getPrisma()
     const { productId, productName, quantity, startDate } = await req.json()
     if (!productId || !productName || !quantity || !startDate) {
       return Response.json({ error: 'Champs requis manquants' }, { status: 400 })

@@ -1,0 +1,172 @@
+<svg viewBox="0 0 580 420" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Sky background -->
+  <rect width="580" height="420" fill="#E0F2FE"/>
+  <rect y="320" width="580" height="100" fill="#D4A76A"/>
+
+  <!-- Ground / construction site base -->
+  <rect y="310" width="580" height="30" fill="#B8895A"/>
+  <!-- Ground detail lines -->
+  <line x1="0" y1="320" x2="580" y2="320" stroke="#A0723F" stroke-width="2"/>
+  <line x1="0" y1="330" x2="580" y2="330" stroke="#A0723F" stroke-width="1" stroke-dasharray="8 6" opacity="0.5"/>
+
+  <!-- Building structure left -->
+  <rect x="40" y="120" width="140" height="200" fill="#E2D5C3"/>
+  <rect x="40" y="120" width="140" height="8" fill="#C4A882"/>
+  <!-- Building floors -->
+  <line x1="40" y1="160" x2="180" y2="160" stroke="#C4A882" stroke-width="2"/>
+  <line x1="40" y1="200" x2="180" y2="200" stroke="#C4A882" stroke-width="2"/>
+  <line x1="40" y1="240" x2="180" y2="240" stroke="#C4A882" stroke-width="2"/>
+  <line x1="40" y1="280" x2="180" y2="280" stroke="#C4A882" stroke-width="2"/>
+  <!-- Windows left building -->
+  <rect x="55" y="130" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="95" y="130" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="135" y="130" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="55" y="170" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <rect x="95" y="170" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <rect x="135" y="170" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <rect x="55" y="210" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="95" y="210" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="135" y="210" width="28" height="22" rx="2" fill="#BFDBFE" opacity="0.9"/>
+  <rect x="55" y="250" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <rect x="95" y="250" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <rect x="135" y="250" width="28" height="22" rx="2" fill="#93C5FD" opacity="0.8"/>
+  <!-- Scaffolding left -->
+  <rect x="180" y="100" width="8" height="220" fill="#D97706"/>
+  <rect x="30" y="100" width="8" height="220" fill="#D97706"/>
+  <line x1="34" y1="110" x2="184" y2="110" stroke="#D97706" stroke-width="4"/>
+  <line x1="34" y1="150" x2="184" y2="150" stroke="#D97706" stroke-width="4"/>
+  <line x1="34" y1="190" x2="184" y2="190" stroke="#D97706" stroke-width="4"/>
+  <line x1="34" y1="230" x2="184" y2="230" stroke="#D97706" stroke-width="4"/>
+  <line x1="34" y1="270" x2="184" y2="270" stroke="#D97706" stroke-width="4"/>
+
+  <!-- Building structure center (under construction) -->
+  <rect x="220" y="180" width="160" height="140" fill="#F5EBD8"/>
+  <rect x="220" y="172" width="160" height="12" fill="#C4A882"/>
+  <!-- Exposed rebar on top -->
+  <line x1="240" y1="140" x2="240" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="260" y1="130" x2="260" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="280" y1="138" x2="280" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="300" y1="125" x2="300" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="320" y1="132" x2="320" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="340" y1="140" x2="340" y2="172" stroke="#78716C" stroke-width="3"/>
+  <line x1="360" y1="128" x2="360" y2="172" stroke="#78716C" stroke-width="3"/>
+  <!-- Rebar horizontal ties -->
+  <line x1="235" y1="145" x2="370" y2="145" stroke="#78716C" stroke-width="2" stroke-dasharray="6 4"/>
+  <line x1="235" y1="158" x2="370" y2="158" stroke="#78716C" stroke-width="2" stroke-dasharray="6 4"/>
+  <!-- Windows center building -->
+  <rect x="235" y="190" width="35" height="30" rx="2" fill="#BFDBFE" opacity="0.85"/>
+  <rect x="285" y="190" width="35" height="30" rx="2" fill="#93C5FD" opacity="0.85"/>
+  <rect x="335" y="190" width="35" height="30" rx="2" fill="#BFDBFE" opacity="0.85"/>
+  <rect x="235" y="235" width="35" height="30" rx="2" fill="#93C5FD" opacity="0.85"/>
+  <rect x="285" y="235" width="35" height="30" rx="2" fill="#BFDBFE" opacity="0.85"/>
+  <rect x="335" y="235" width="35" height="30" rx="2" fill="#93C5FD" opacity="0.85"/>
+  <!-- Door -->
+  <rect x="278" y="270" width="44" height="50" rx="2" fill="#78716C"/>
+
+  <!-- Crane tower -->
+  <rect x="395" y="30" width="16" height="290" fill="#D97706"/>
+  <!-- Crane jib (horizontal arm) -->
+  <rect x="300" y="30" width="200" height="10" fill="#F59E0B"/>
+  <!-- Crane cable -->
+  <line x1="440" y1="40" x2="440" y2="130" stroke="#78716C" stroke-width="2"/>
+  <!-- Crane hook -->
+  <rect x="428" y="128" width="24" height="16" rx="2" fill="#1C1917"/>
+  <!-- Crane counter jib -->
+  <rect x="395" y="30" width="60" height="10" fill="#F59E0B"/>
+  <!-- Crane cabin -->
+  <rect x="400" y="40" width="30" height="22" rx="3" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+
+  <!-- Right building (modern glass) -->
+  <rect x="460" y="100" width="100" height="220" fill="#1C1917"/>
+  <!-- Glass panels -->
+  <rect x="468" y="108" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.7"/>
+  <rect x="514" y="108" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.7"/>
+  <rect x="468" y="148" width="36" height="30" rx="1" fill="#38BDF8" opacity="0.6"/>
+  <rect x="514" y="148" width="36" height="30" rx="1" fill="#38BDF8" opacity="0.6"/>
+  <rect x="468" y="188" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.7"/>
+  <rect x="514" y="188" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.7"/>
+  <rect x="468" y="228" width="36" height="30" rx="1" fill="#38BDF8" opacity="0.6"/>
+  <rect x="514" y="228" width="36" height="30" rx="1" fill="#38BDF8" opacity="0.6"/>
+  <rect x="468" y="268" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.5"/>
+  <rect x="514" y="268" width="36" height="30" rx="1" fill="#7DD3FC" opacity="0.5"/>
+
+  <!-- Workers (silhouettes) -->
+  <!-- Worker 1 -->
+  <circle cx="220" cy="298" r="8" fill="#D97706"/>
+  <rect x="214" y="306" width="12" height="18" rx="2" fill="#92400E"/>
+  <line x1="220" y1="318" x2="215" y2="332" stroke="#92400E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="220" y1="318" x2="225" y2="332" stroke="#92400E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="215" y1="308" x2="208" y2="318" stroke="#92400E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="225" y1="308" x2="230" y2="318" stroke="#92400E" stroke-width="3" stroke-linecap="round"/>
+  <!-- Worker 2 -->
+  <circle cx="260" cy="296" r="8" fill="#F59E0B"/>
+  <rect x="254" y="304" width="12" height="18" rx="2" fill="#1C1917"/>
+  <line x1="260" y1="316" x2="255" y2="330" stroke="#1C1917" stroke-width="3" stroke-linecap="round"/>
+  <line x1="260" y1="316" x2="265" y2="330" stroke="#1C1917" stroke-width="3" stroke-linecap="round"/>
+  <!-- Worker 3 -->
+  <circle cx="200" cy="300" r="7" fill="#D97706"/>
+  <rect x="195" y="307" width="10" height="15" rx="2" fill="#78716C"/>
+
+  <!-- Cement mixer truck -->
+  <rect x="350" y="280" width="80" height="40" rx="4" fill="#F59E0B"/>
+  <rect x="388" y="268" width="45" height="25" rx="3" fill="#FEF3C7"/>
+  <circle cx="366" cy="322" r="10" fill="#1C1917"/>
+  <circle cx="366" cy="322" r="5" fill="#78716C"/>
+  <circle cx="416" cy="322" r="10" fill="#1C1917"/>
+  <circle cx="416" cy="322" r="5" fill="#78716C"/>
+  <!-- Mixer drum -->
+  <ellipse cx="368" cy="290" rx="22" ry="16" fill="#D97706"/>
+  <line x1="350" y1="285" x2="386" y2="275" stroke="#92400E" stroke-width="2"/>
+  <line x1="350" y1="295" x2="386" y2="305" stroke="#92400E" stroke-width="2"/>
+
+  <!-- Cement bags stack -->
+  <rect x="80" y="298" width="30" height="16" rx="2" fill="#E2D5C3"/>
+  <rect x="83" y="290" width="30" height="16" rx="2" fill="#D4C4A8"/>
+  <rect x="86" y="282" width="30" height="16" rx="2" fill="#E2D5C3"/>
+  <!-- CIMENT label on bags -->
+  <text x="88" y="302" font-family="sans-serif" font-size="6" font-weight="bold" fill="#78716C">CIMENT</text>
+  <text x="88" y="294" font-family="sans-serif" font-size="6" font-weight="bold" fill="#78716C">CIMENT</text>
+
+  <!-- Iron rebar pile -->
+  <line x1="130" y1="310" x2="200" y2="310" stroke="#78716C" stroke-width="5" stroke-linecap="round"/>
+  <line x1="133" y1="315" x2="203" y2="315" stroke="#6B6560" stroke-width="5" stroke-linecap="round"/>
+  <line x1="136" y1="320" x2="206" y2="320" stroke="#78716C" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Safety cones -->
+  <polygon points="460,318 452,340 468,340" fill="#EA580C"/>
+  <polygon points="475,315 467,340 483,340" fill="#EA580C"/>
+  <rect x="448" y="338" width="22" height="3" fill="#E2D5C3"/>
+  <rect x="463" y="338" width="22" height="3" fill="#E2D5C3"/>
+
+  <!-- Hard hat on ground -->
+  <ellipse cx="535" cy="312" rx="18" ry="8" fill="#D97706"/>
+  <rect x="520" y="308" width="30" height="8" rx="3" fill="#F59E0B"/>
+
+  <!-- Sun -->
+  <circle cx="530" cy="55" r="28" fill="#FDE68A" opacity="0.9"/>
+  <circle cx="530" cy="55" r="20" fill="#FCD34D"/>
+  <!-- Sun rays -->
+  <line x1="530" y1="16" x2="530" y2="10" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="555" y1="30" x2="560" y2="24" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="569" y1="55" x2="575" y2="55" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="555" y1="80" x2="560" y2="86" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="505" y1="30" x2="500" y2="24" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="491" y1="55" x2="485" y2="55" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+  <line x1="505" y1="80" x2="500" y2="86" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Clouds -->
+  <ellipse cx="80" cy="50" rx="40" ry="18" fill="white" opacity="0.85"/>
+  <ellipse cx="60" cy="52" rx="25" ry="14" fill="white" opacity="0.85"/>
+  <ellipse cx="105" cy="52" rx="25" ry="14" fill="white" opacity="0.85"/>
+  <ellipse cx="200" cy="70" rx="30" ry="12" fill="white" opacity="0.75"/>
+  <ellipse cx="182" cy="72" rx="18" ry="10" fill="white" opacity="0.75"/>
+  <ellipse cx="220" cy="72" rx="18" ry="10" fill="white" opacity="0.75"/>
+
+  <!-- Decorative grid overlay (subtle) -->
+  <rect width="580" height="420" fill="url(#grid)" opacity="0.04"/>
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1C1917" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+</svg>

@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 import { resolveAuthSessionConfig } from "./lib/auth-session-config";
 import ConditionalFooter from "./components/ConditionalFooter";
 import ConditionalNavbar from "./components/ConditionalNavbar";
@@ -19,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Projet TWM - SFMC Bénin",
-  description: "Application microservices TWM",
+  title: "SFMC Benin - Plateforme d operations",
+  description: "Plateforme microservices de supervision, de pilotage et de coordination pour SFMC Benin.",
 };
 
 export default function RootLayout({

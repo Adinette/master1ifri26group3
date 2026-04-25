@@ -1,43 +1,55 @@
 import amqplib from 'amqplib'
-import { prisma } from './prisma'
+import { applyStockMovement } from './stock-workflow'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'
 const EXCHANGE = 'sfmc.events'
+let consumerStarted = false
+let consumerPromise: Promise<void> | null = null
 
 export async function startConsumer() {
+  if (consumerStarted && consumerPromise) {
+    return consumerPromise
+  }
+
+  consumerStarted = true
+  consumerPromise = (async () => {
   try {
     const conn = await amqplib.connect(RABBITMQ_URL)
     const ch = await conn.createChannel()
 
     await ch.assertExchange(EXCHANGE, 'topic', { durable: true })
-    const q = await ch.assertQueue('inventory.order-created', { durable: true })
-    await ch.bindQueue(q.queue, EXCHANGE, 'order.created')
+    const q = await ch.assertQueue('inventory.stock-updated', { durable: true })
+    await ch.bindQueue(q.queue, EXCHANGE, 'stock.updated')
 
-    console.log('🐇 Consumer RabbitMQ démarré — en attente d\'événements order.created')
+    console.log('🐇 Consumer RabbitMQ inventory démarré — en attente de stock.updated')
 
     ch.consume(q.queue, async (msg) => {
       if (!msg) return
       const data = JSON.parse(msg.content.toString())
-      console.log('📦 OrderCreated reçu :', data)
+      console.log('📦 StockUpdated reçu :', data)
 
-      // Décrémenter le stock
-      const stock = await prisma.stock.findFirst({
-        where: { productId: data.productId }
+      await applyStockMovement({
+        productId: Number(data.productId),
+        productName: String(data.productName),
+        warehouseId: Number(data.warehouseId ?? 1),
+        warehouse: typeof data.warehouse === 'string' ? data.warehouse : 'Usine principale',
+        type: 'IN',
+        quantity: Number(data.quantity),
+        reason: `Réapprovisionnement automatique depuis lot ${data.batchId ?? 'production'}`,
       })
-
-      if (stock) {
-        const newQty = stock.quantity - data.quantity
-        await prisma.stock.update({
-          where: { id: stock.id },
-          data: { quantity: newQty }
-        })
-        console.log(`✅ Stock mis à jour : ${stock.productName} → ${newQty} unités`)
-      }
+      console.log(`✅ Stock réapprovisionné : ${data.productName} → +${data.quantity} unités`)
 
       ch.ack(msg)
     })
   } catch (error) {
+    consumerStarted = false
+    consumerPromise = null
     console.error('❌ Erreur consumer RabbitMQ :', error)
-    setTimeout(startConsumer, 5000)
+    setTimeout(() => {
+      void startConsumer()
+    }, 5000)
   }
+  })()
+
+  return consumerPromise
 }

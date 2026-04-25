@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:infra": "docker compose up -d && node scripts/bootstrap-kong.mjs --soft-fail",
+    "kong:bootstrap": "node scripts/bootstrap-kong.mjs",
+    "dev:services": "concurrently -n auth,user,product,inventory,order,production,billing,notification,reporting \"npm --prefix services/auth run dev -- --webpack\" \"npm --prefix services/user run dev -- --webpack\" \"npm --prefix services/product run dev -- --webpack\" \"npm --prefix services/inventory run dev -- --webpack\" \"npm --prefix services/order run dev -- --webpack\" \"npm --prefix services/production run dev -- --webpack\" \"npm --prefix services/billing run dev -- --webpack\" \"npm --prefix services/notification run dev -- --webpack\" \"npm --prefix services/reporting run dev -- --webpack\"",
+    "dev:all": "concurrently -n front,auth,user,product,inventory,order,production,billing,notification,reporting \"npm run dev\" \"npm --prefix services/auth run dev -- --webpack\" \"npm --prefix services/user run dev -- --webpack\" \"npm --prefix services/product run dev -- --webpack\" \"npm --prefix services/inventory run dev -- --webpack\" \"npm --prefix services/order run dev -- --webpack\" \"npm --prefix services/production run dev -- --webpack\" \"npm --prefix services/billing run dev -- --webpack\" \"npm --prefix services/notification run dev -- --webpack\" \"npm --prefix services/reporting run dev -- --webpack\"",
+    "dev:full": "npm run dev:infra && npm run dev:all",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -27,9 +33,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

@@ -8,6 +8,8 @@ type StatusEntity = {
   status?: string
 }
 
+type CollectionEntity = Record<string, unknown> & StatusEntity
+
 async function fetchCollection<T>(url: string): Promise<ServiceResult<T>> {
   try {
     const response = await fetch(url, { cache: 'no-store' })
@@ -38,11 +40,11 @@ function countByStatus<T extends StatusEntity>(items: T[], status: string) {
 
 export async function GET() {
   const [ordersResult, stockResult, invoicesResult, notificationsResult, productionResult] = await Promise.all([
-    fetchCollection('http://localhost:3005/api/orders'),
-    fetchCollection('http://localhost:3004/api/stock'),
-    fetchCollection('http://localhost:3007/api/invoices'),
-    fetchCollection('http://localhost:3008/api/notifications'),
-    fetchCollection('http://localhost:3006/api/production'),
+    fetchCollection<CollectionEntity>('http://localhost:3005/api/orders'),
+    fetchCollection<CollectionEntity>('http://localhost:3004/api/stock'),
+    fetchCollection<CollectionEntity>('http://localhost:3007/api/invoices'),
+    fetchCollection<CollectionEntity>('http://localhost:3008/api/notifications'),
+    fetchCollection<CollectionEntity>('http://localhost:3006/api/production'),
   ])
 
   const orders = ordersResult.data

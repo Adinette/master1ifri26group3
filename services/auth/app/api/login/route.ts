@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { resolveJwtSecret } from '@/lib/jwt'
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,8 +17,8 @@ export async function POST(req: NextRequest) {
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '24h' }
+      resolveJwtSecret(),
+      { expiresIn: '24h', algorithm: 'HS256' }
     )
 
     return Response.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } })

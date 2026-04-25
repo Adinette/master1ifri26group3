@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma'
+import { applyStockMovement, buildStockAlertPayload } from '@/lib/stock-workflow'
+import { publishEvent } from '@/lib/rabbitmq'
 import { NextRequest } from 'next/server'
 
 export async function GET() {
@@ -23,22 +25,35 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Type doit être IN ou OUT' }, { status: 400 })
     }
 
-    // Enregistrer le mouvement
-    const movement = await prisma.movement.create({
-      data: { productId, productName, warehouseId, type, quantity, reason }
+    const result = await applyStockMovement({
+      productId: Number(productId),
+      productName: String(productName),
+      warehouseId: Number(warehouseId),
+      type,
+      quantity: Number(quantity),
+      reason,
     })
 
-    // Mettre à jour le stock
-    const stock = await prisma.stock.findFirst({ where: { productId, warehouseId } })
-    if (stock) {
-      await prisma.stock.update({
-        where: { id: stock.id },
-        data: { quantity: type === 'IN' ? stock.quantity + quantity : stock.quantity - quantity }
-      })
+    if (type === 'OUT' && result.stock.quantity <= result.stock.minThreshold) {
+      await publishEvent(
+        'stock.alert',
+        buildStockAlertPayload({
+          trigger: 'low-threshold',
+          productId: Number(productId),
+          productName: String(productName),
+          currentQuantity: result.stock.quantity,
+          minThreshold: result.stock.minThreshold,
+          warehouseId: result.stock.warehouseId,
+          warehouse: result.stock.warehouse,
+        })
+      )
     }
 
-    return Response.json(movement, { status: 201 })
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+    return Response.json(result.movement, { status: 201 })
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Erreur serveur' },
+      { status: error instanceof Error && error.message.includes('insuffisant') ? 409 : 500 }
+    )
   }
 }

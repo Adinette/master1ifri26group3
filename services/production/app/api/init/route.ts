@@ -1,11 +1,8 @@
-import { startConsumer } from '@/lib/consumer'
-
-let started = false
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  if (!started) {
-    started = true
-    await startConsumer()
-  }
-  return Response.json({ status: 'Production consumer démarré' })
+  return Response.json({
+    status: 'Compatibility route active',
+    message: 'The production consumer is now decoupled from the Next build.',
+  })
 }

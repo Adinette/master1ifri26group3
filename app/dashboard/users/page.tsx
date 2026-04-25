@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 type User = {
   id: number
@@ -30,6 +32,8 @@ const EMPTY_FORM: FormData = {
 const ROLES = ['admin', 'operator', 'client', 'user']
 
 export default function UsersPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -46,6 +50,14 @@ export default function UsersPage() {
     try {
       const res = await fetch('/api/users')
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Authentification requise pour accéder à cette page.')
+        }
+
+        if (res.status === 403) {
+          throw new Error('Accès réservé aux administrateurs.')
+        }
+
         throw new Error('Erreur de chargement')
       }
 
@@ -59,8 +71,23 @@ export default function UsersPage() {
   }
 
   useEffect(() => {
+    if (status === 'loading') {
+      return
+    }
+
+    if (!session) {
+      router.replace('/front/auth/login')
+      return
+    }
+
+    if (session.user.role !== 'admin') {
+      setLoading(false)
+      setError('Accès réservé aux administrateurs.')
+      return
+    }
+
     fetchUsers()
-  }, [])
+  }, [router, session, status])
 
   const openCreate = () => {
     setEditingUser(null)
@@ -142,6 +169,25 @@ export default function UsersPage() {
 
   return (
     <div className="p-6 lg:p-10">
+      {status === 'loading' ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+      ) : error === 'Accès réservé aux administrateurs.' ? (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-8 mb-8 max-w-3xl">
+          <h1 className="text-2xl font-bold mb-2">Accès restreint</h1>
+          <p className="text-sm text-amber-800 dark:text-amber-300 mb-4">
+            La gestion des utilisateurs est réservée aux administrateurs du système.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-sm"
+          >
+            Retour au dashboard
+          </button>
+        </div>
+      ) : (
+        <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold mb-1">Utilisateurs</h1>
@@ -347,6 +393,8 @@ export default function UsersPage() {
             </form>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   )

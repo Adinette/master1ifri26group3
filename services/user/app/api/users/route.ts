@@ -2,8 +2,23 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcrypt'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const email = req.nextUrl.searchParams.get('email')
+
+    if (email) {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true },
+      })
+
+      if (!user) {
+        return Response.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
+      }
+
+      return Response.json(user)
+    }
+
     const users = await prisma.user.findMany({
       select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true },
       orderBy: { createdAt: 'desc' }

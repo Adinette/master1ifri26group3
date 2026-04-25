@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SFMC Benin
 
-## Getting Started
+Plateforme microservices de supervision et pilotage pour SFMC Benin.
+Le depot technique conserve le nom tp_twm.
 
-First, run the development server:
+## Stack
 
-```bash
+- Frontend principal: Next.js 16, React 19, TypeScript, Tailwind CSS 4
+- Architecture: BFF dans app/api + microservices metier dans services/*
+- Messagerie: RabbitMQ (exchange sfmc.events)
+- Base de donnees: PostgreSQL via Prisma
+- API Gateway: Kong
+
+## Services et ports
+
+- Frontend principal: 3000
+- Auth Service: 3001
+- User Service: 3002
+- Product Service: 3003
+- Inventory Service: 3004
+- Order Service: 3005
+- Production Service: 3006
+- Billing Service: 3007
+- Notification Service: 3008
+- Reporting Service: 3009
+- Kong Proxy: 8000
+- Kong Admin: 8001
+- RabbitMQ: 5672
+- RabbitMQ UI: 15672
+
+## Prerequis
+
+- Node.js 20+
+- npm 10+
+- Docker Desktop
+- Fichier .env configure
+
+## Demarrage local
+
+1. Installer les dependances:
+
+npm install
+
+2. Demarrer l'infrastructure:
+
+npm run dev:infra
+
+3. Demarrer les microservices:
+
+npm run dev:services
+
+4. Demarrer le frontend principal:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Option tout-en-un (infra + front + services):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+npm run dev:full
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Verification technique
 
-## Learn More
+Build racine:
 
-To learn more about Next.js, take a look at the following resources:
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Build service production:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+npm --prefix services/production run build
 
-## Deploy on Vercel
+Note: sur Windows, un lint global peut etre ralenti si des dossiers .next de services existent deja.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Verification fonctionnelle Frontend
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Navigation dashboard sans incoherence:
+  - billing, notifications, orders, production, products, profile, reporting, services, settings, stock, users, versions
+- Pages metier:
+  - Produits: creation/modification/suppression
+  - Commandes: creation + changement de statut
+  - Stock: mouvements IN/OUT + visualisation alertes
+  - Production: creation lot + passage completed
+  - Notifications: lecture + actualisation
+
+## Verification fonctionnelle Backend et evenements
+
+1. Creation commande:
+- Order Service tente la reservation auto de stock via Inventory.
+- Si stock suffisant: commande validated.
+- Si stock insuffisant: commande pending + emission stock.alert.
+
+2. Reaction production:
+- Production consumer ecoute stock.alert.
+- Creation auto d un lot de production planifie.
+
+3. Remise en stock:
+- Quand un lot passe a completed, Production publie stock.updated.
+- Inventory consumer recoit stock.updated et incremente le stock.
+
+4. Notifications:
+- Notification consumer ecoute order.created, payment.confirmed, stock.alert.
+- Les notifications sont enregistrees et exposees par API.
+
+## Initialisation des consumers RabbitMQ
+
+Appeler ces endpoints apres demarrage local:
+
+- http://localhost:3004/api/init
+- http://localhost:3006/api/init
+- http://localhost:3008/api/init
+
+## Correctifs inclus dans cette livraison
+
+- Correction JSX de la sidebar dashboard.
+- Stabilisation build de services/production avec Prisma lazy client.
+- Correction Next.js 16 sur auth:
+  - extraction de la config NextAuth dans app/lib/auth-options.ts
+  - suppression de l export non autorise dans la route app/api/auth/[...nextauth]/route.ts
+- Build racine valide apres correction.
+- Build services/production valide.
+
+## Arborescence utile
+
+- app: frontend principal, pages, dashboard, BFF
+- services: microservices metier
+- prisma: schema Prisma principal
+- docs: documents et scripts de generation
+- docker-compose.yml: infra locale
+
+## Liens de base
+
+- Accueil: http://localhost:3000
+- Catalogue: http://localhost:3000/catalogue
+- Login: http://localhost:3000/front/auth/login
+- Dashboard: http://localhost:3000/dashboard

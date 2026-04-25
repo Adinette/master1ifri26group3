@@ -1,13 +1,17 @@
 @import "tailwindcss";
 
+/* ─── Palette Bleu Ardoise SFMC Bénin (dashboard-aligned) ─── */
 :root {
-  --background: #f4efe6;
-  --foreground: #142033;
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-strong: rgba(255, 255, 255, 0.94);
-  --muted: #5f6b7b;
-  --accent: #0f766e;
-  --accent-strong: #155eef;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --surface: #FFFFFF;
+  --surface-muted: #EFF6FF;
+  --muted: #64748B;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-sky: #0EA5E9;
+  --dark: #0F172A;
+  --dark-card: #1E293B;
 }
 
 @theme inline {
@@ -17,46 +21,233 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09111f;
-    --foreground: #eef4ff;
-    --surface: rgba(15, 23, 42, 0.72);
-    --surface-strong: rgba(15, 23, 42, 0.92);
-    --muted: #9db0cb;
-    --accent: #2dd4bf;
-    --accent-strong: #7dd3fc;
-  }
-}
-
 html {
   scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 12%, rgba(251, 191, 36, 0.16), transparent 24%),
-    radial-gradient(circle at 88% 14%, rgba(59, 130, 246, 0.16), transparent 25%),
-    linear-gradient(180deg, #fffdf8 0%, var(--background) 48%, #eef5ff 100%);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background:
-      radial-gradient(circle at 12% 12%, rgba(20, 184, 166, 0.15), transparent 24%),
-      radial-gradient(circle at 86% 14%, rgba(59, 130, 246, 0.16), transparent 24%),
-      linear-gradient(180deg, #020617 0%, var(--background) 52%, #111827 100%);
-  }
-}
-
 body::selection {
-  background: color-mix(in srgb, var(--accent-strong) 28%, white);
+  background: rgba(37, 99, 235, 0.22);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--accent-strong) 36%, transparent) transparent;
+  scrollbar-color: rgba(37, 99, 235, 0.36) transparent;
+}
+
+/* ─── Keyframes ─── */
+
+/* Bande défilante ticker */
+@keyframes sfmc-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Reveal vertical */
+@keyframes sfmc-fade-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Reveal depuis la droite */
+@keyframes sfmc-fade-left {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Reveal depuis la gauche */
+@keyframes sfmc-fade-right {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Entrée avec ressort */
+@keyframes sfmc-scale-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Shimmer sur les boutons */
+@keyframes sfmc-shimmer {
+  from { transform: translateX(-100%) skewX(-18deg); }
+  to   { transform: translateX(200%) skewX(-18deg); }
+}
+
+/* Pulsation du badge hero */
+@keyframes sfmc-pulse-border {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+/* Flottement léger */
+@keyframes sfmc-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+/* Trait SVG se dessinant */
+@keyframes sfmc-draw {
+  from { stroke-dashoffset: 400; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ─── Classes utilitaires ─── */
+
+.sfmc-ticker {
+  animation: sfmc-ticker 28s linear infinite;
+  white-space: nowrap;
+}
+
+.sfmc-float-soft {
+  animation: sfmc-float 5s ease-in-out infinite;
+}
+
+.sfmc-pulse-badge {
+  animation: sfmc-pulse-border 2.2s ease-out infinite;
+}
+
+/* Animations déclenchées (ajoutées par JS via IntersectionObserver) */
+.sfmc-animated.sfmc-fade-up    { animation: sfmc-fade-up    0.65s ease-out forwards; }
+.sfmc-animated.sfmc-fade-left  { animation: sfmc-fade-left  0.65s ease-out forwards; }
+.sfmc-animated.sfmc-fade-right { animation: sfmc-fade-right 0.65s ease-out forwards; }
+.sfmc-animated.sfmc-scale-in   { animation: sfmc-scale-in   0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.sfmc-animated.sfmc-draw path,
+.sfmc-animated.sfmc-draw line  { animation: sfmc-draw 1.2s ease-out forwards; }
+
+/* Elements cachés en attente d'animation */
+.sfmc-will-animate {
+  opacity: 0;
+}
+
+/* Bouton primaire bleu */
+.sfmc-btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #2563EB;
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.sfmc-btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: translateX(-100%) skewX(-18deg);
+  animation: sfmc-shimmer 3s ease-in-out infinite;
+}
+.sfmc-btn-primary:hover {
+  background-color: #1D4ED8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+}
+
+/* Bouton outline bleu */
+.sfmc-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #2563EB;
+  color: #2563EB;
+  background-color: transparent;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.sfmc-btn-outline:hover {
+  background-color: #2563EB;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Bouton sombre (outline blanc sur fond sombre) */
+.sfmc-btn-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid rgba(255,255,255,0.7);
+  color: white;
+  background-color: transparent;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.sfmc-btn-dark:hover {
+  background-color: rgba(255,255,255,0.1);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+/* Hover card */
+.sfmc-card-hover {
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+.sfmc-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Section sombre */
+.sfmc-section-dark {
+  background-color: #0F172A;
+  color: white;
+}
+
+/* Badge pill */
+.sfmc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+/* Badge inline sombre */
+.sfmc-badge-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: rgba(37, 99, 235, 0.18);
+  color: #3B82F6;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .sfmc-ticker,
+  .sfmc-float-soft,
+  .sfmc-pulse-badge,
+  .sfmc-btn-primary::after { animation: none; }
+  .sfmc-will-animate { opacity: 1; }
 }
