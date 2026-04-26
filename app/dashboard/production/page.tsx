@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { translateStatus } from '../../lib/format'
 
 type ProductionStatus = 'planned' | 'in_progress' | 'completed'
 
@@ -233,7 +234,7 @@ export default function ProductionPage() {
                     <td className="px-5 py-4 text-right font-medium">{batch.quantity}</td>
                     <td className="px-5 py-4 text-center">
                       <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${badgeClass(batch.status)}`}>
-                        {batch.status}
+                        {translateStatus(batch.status)}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right text-zinc-500">{new Date(batch.startDate).toLocaleDateString('fr-FR')}</td>
@@ -245,7 +246,7 @@ export default function ProductionPage() {
                       >
                         {STATUSES.map((status) => (
                           <option key={status} value={status}>
-                            {status}
+                            {translateStatus(status)}
                           </option>
                         ))}
                       </select>

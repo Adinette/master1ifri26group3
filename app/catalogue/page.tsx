@@ -8,14 +8,14 @@ interface Product {
   ref: string
   name: string
   category: string
-  subcategory: string
+  subcategory?: string
   unit: string
   price: number
   inStock: boolean
-  popular: boolean
-  desc: string
-  specs: Record<string, string>
-  tags: string[]
+  popular?: boolean
+  desc?: string
+  specs?: Record<string, string>
+  tags?: string[]
 }
 
 const CATEGORIES = [
@@ -133,35 +133,39 @@ function ProductCard({ p }: { p: Product }) {
         </div>
 
         {/* Description courte */}
-        <p
-          style={{
-            color: '#475569',
-            fontSize: '0.83rem',
-            lineHeight: 1.7,
-            marginTop: '0.85rem',
-          }}
-        >
-          {p.desc}
-        </p>
+        {p.desc && (
+          <p
+            style={{
+              color: '#475569',
+              fontSize: '0.83rem',
+              lineHeight: 1.7,
+              marginTop: '0.85rem',
+            }}
+          >
+            {p.desc}
+          </p>
+        )}
 
         {/* Tags */}
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-          {p.tags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                color: '#64748B',
-                backgroundColor: '#F5F5F4',
-                padding: '0.15rem 0.5rem',
-                borderRadius: '999px',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {p.tags && p.tags.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+            {p.tags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  color: '#64748B',
+                  backgroundColor: '#F5F5F4',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '999px',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Specs (dépliable) */}
@@ -176,7 +180,7 @@ function ProductCard({ p }: { p: Product }) {
             gap: '0.6rem 1.5rem',
           }}
         >
-          {Object.entries(p.specs).map(([k, v]) => (
+          {Object.entries(p.specs ?? {}).map(([k, v]) => (
             <div key={k}>
               <p style={{ fontSize: '0.67rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</p>
               <p style={{ fontSize: '0.8rem', color: '#0F172A', fontWeight: 700, marginTop: '0.1rem' }}>{v}</p>
@@ -263,7 +267,7 @@ export default function CataloguePage() {
       search === '' ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.ref.toLowerCase().includes(search.toLowerCase()) ||
-      p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+      (p.tags ?? []).some((t) => t.toLowerCase().includes(search.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price

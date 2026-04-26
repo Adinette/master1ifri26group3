@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { formatFCFA, translateStatus } from '../../lib/format'
 
 type OrderStatus = 'pending' | 'validated' | 'shipped' | 'delivered'
 
@@ -243,10 +244,10 @@ export default function OrdersPage() {
                       <p className="text-xs text-zinc-400">Produit #{order.productId}</p>
                     </td>
                     <td className="px-5 py-4 text-right font-medium">{order.quantity}</td>
-                    <td className="px-5 py-4 text-right font-medium">{order.totalPrice.toFixed(2)} €</td>
+                    <td className="px-5 py-4 text-right font-medium">{formatFCFA(order.totalPrice)}</td>
                     <td className="px-5 py-4 text-center">
                       <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${badgeClass(order.status)}`}>
-                        {order.status}
+                        {translateStatus(order.status)}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -257,7 +258,7 @@ export default function OrdersPage() {
                       >
                         {STATUSES.map((status) => (
                           <option key={status} value={status}>
-                            {status}
+                            {translateStatus(status)}
                           </option>
                         ))}
                       </select>
@@ -316,7 +317,7 @@ export default function OrdersPage() {
                   <option value="">Sélectionner…</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name} — {product.price.toFixed(2)} €
+                      {product.name} — {formatFCFA(product.price)}
                     </option>
                   ))}
                 </select>
@@ -338,7 +339,7 @@ export default function OrdersPage() {
 
               <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-sm">
                 <p className="text-zinc-500 mb-1">Montant estimé</p>
-                <p className="text-xl font-bold">{estimatedTotal.toFixed(2)} €</p>
+                <p className="text-xl font-bold">{formatFCFA(estimatedTotal)}</p>
                 <p className="text-xs text-zinc-400 mt-1">Calculé à partir du produit sélectionné et de la quantité.</p>
               </div>
 

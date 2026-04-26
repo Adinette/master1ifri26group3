@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatFCFA } from '../../lib/format'
 
 type Product = {
   id: number
@@ -185,7 +186,7 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400">{product.unit}</td>
                     <td className="px-5 py-4 text-right font-medium">
-                      {product.price.toFixed(2)} €
+                      {formatFCFA(product.price)}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="inline-flex gap-2">
@@ -280,7 +281,7 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                  Prix unitaire (€) <span className="text-red-500">*</span>
+                  Prix unitaire (F CFA) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"

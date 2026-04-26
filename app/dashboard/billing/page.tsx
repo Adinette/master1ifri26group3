@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { formatFCFA, translateStatus } from '../../lib/format'
 
 type Order = {
   id: number
@@ -261,14 +262,14 @@ export default function BillingPage() {
                       <p className="text-xs text-zinc-400">Facture #{invoice.id}</p>
                     </td>
                     <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400">Commande #{invoice.orderId}</td>
-                    <td className="px-5 py-4 text-right font-medium">{invoice.amount.toFixed(2)} €</td>
+                    <td className="px-5 py-4 text-right font-medium">{formatFCFA(invoice.amount)}</td>
                     <td className="px-5 py-4 text-center">
                       <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${
                         invoice.status === 'paid'
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                           : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                       }`}>
-                        {invoice.status}
+                        {translateStatus(invoice.status)}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right text-zinc-500">
@@ -310,7 +311,7 @@ export default function BillingPage() {
                   <option value="">Sélectionner…</option>
                   {invoiceableOrders.map((order) => (
                     <option key={order.id} value={order.id}>
-                      Commande #{order.id} — {order.clientName} — {order.totalPrice.toFixed(2)} €
+                      Commande #{order.id} — {order.clientName} — {formatFCFA(order.totalPrice)}
                     </option>
                   ))}
                 </select>
@@ -329,7 +330,7 @@ export default function BillingPage() {
 
               <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-sm">
                 <p className="text-zinc-500 mb-1">Montant de la facture</p>
-                <p className="text-xl font-bold">{selectedOrder ? `${selectedOrder.totalPrice.toFixed(2)} €` : '0.00 €'}</p>
+                <p className="text-xl font-bold">{selectedOrder ? formatFCFA(selectedOrder.totalPrice) : formatFCFA(0)}</p>
                 <p className="text-xs text-zinc-400 mt-1">Le montant est repris depuis la commande sélectionnée.</p>
               </div>
 
@@ -378,7 +379,7 @@ export default function BillingPage() {
                   <option value="">Sélectionner…</option>
                   {invoices.filter((invoice) => invoice.status !== 'paid').map((invoice) => (
                     <option key={invoice.id} value={invoice.id}>
-                      Facture #{invoice.id} — {invoice.clientName} — {invoice.amount.toFixed(2)} €
+                      Facture #{invoice.id} — {invoice.clientName} — {formatFCFA(invoice.amount)}
                     </option>
                   ))}
                 </select>
@@ -414,7 +415,7 @@ export default function BillingPage() {
 
               <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-sm">
                 <p className="text-zinc-500 mb-1">Facture sélectionnée</p>
-                <p className="text-base font-semibold">{selectedInvoice ? `${selectedInvoice.clientName} — ${selectedInvoice.amount.toFixed(2)} €` : 'Aucune facture sélectionnée'}</p>
+                <p className="text-base font-semibold">{selectedInvoice ? `${selectedInvoice.clientName} — ${formatFCFA(selectedInvoice.amount)}` : 'Aucune facture sélectionnée'}</p>
               </div>
 
               <div className="flex gap-3 pt-2">

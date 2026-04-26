@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { formatFCFA, translateStatus } from "../lib/format"
 
 type ServiceStatus = { available: boolean; error: string | null }
 
@@ -157,7 +158,7 @@ export default function DashboardPage() {
               <KpiCard icon="🏪" label="Stock" value={data.summary.totalStockItems} sub={`${lowStockItems.length} faibles`} tone={lowStockItems.length > 0 ? 'amber' : 'green'} />
               <KpiCard icon="🧾" label="Factures" value={data.summary.totalInvoices} sub={`${data.summary.paidInvoices} payées`} tone="cyan" />
               <KpiCard icon="🏭" label="Production" value={data.summary.totalBatches} sub={`${data.summary.completedBatches} terminés`} tone="violet" />
-              <KpiCard icon="💰" label="Revenus" value={`${(data.summary.totalRevenue ?? 0).toLocaleString()}`} sub={`${(data.summary.pendingRevenue ?? 0).toLocaleString()} en attente`} tone="green" suffix=" FCFA" small />
+              <KpiCard icon="💰" label="Revenus" value={formatFCFA(data.summary.totalRevenue)} sub={`${formatFCFA(data.summary.pendingRevenue)} en attente`} tone="green" small />
             </div>
           </section>
 
@@ -218,7 +219,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${orderBadge(order.status)}`}>
-                      {order.status}
+                      {translateStatus(order.status)}
                     </span>
                   </div>
                 ))}
@@ -240,8 +241,8 @@ export default function DashboardPage() {
                       <p className="text-xs text-zinc-400">Facture #{inv.id}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold">{inv.amount.toFixed(2)} €</p>
-                      <p className={`text-xs ${inv.status === 'paid' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>{inv.status}</p>
+                      <p className="text-sm font-semibold">{formatFCFA(inv.amount)}</p>
+                      <p className={`text-xs ${inv.status === 'paid' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>{translateStatus(inv.status)}</p>
                     </div>
                   </div>
                 ))}

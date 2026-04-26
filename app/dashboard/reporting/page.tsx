@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatFCFA, translateStatus } from '../../lib/format'
 
 type Order = {
   id: number
@@ -125,7 +126,7 @@ export default function ReportingPage() {
       <div>
         <h1 className="text-2xl font-bold mb-2">Reporting global</h1>
         <p className="text-zinc-500">
-          Vue d&apos;agrégation Phase 7 : commandes, stock, facturation, notifications et production.
+          Vue consolidée des commandes, stock, facturation, notifications et production.
         </p>
       </div>
 
@@ -216,8 +217,8 @@ export default function ReportingPage() {
             </div>
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
               <p className="text-sm text-zinc-500 mb-1">Revenus encaissés</p>
-              <p className="text-2xl font-bold text-green-700">{(data.summary.totalRevenue ?? 0).toLocaleString()} FCFA</p>
-              <p className="text-xs text-zinc-400 mt-1">{(data.summary.pendingRevenue ?? 0).toLocaleString()} FCFA en attente</p>
+              <p className="text-2xl font-bold text-green-700">{formatFCFA(data.summary.totalRevenue ?? 0)}</p>
+              <p className="text-xs text-zinc-400 mt-1">{formatFCFA(data.summary.pendingRevenue ?? 0)} en attente</p>
             </div>
           </div>
 
@@ -235,9 +236,9 @@ export default function ReportingPage() {
                       <p className="text-xs text-zinc-400">Facture #{invoice.id}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-sm">{invoice.amount.toFixed(2)} €</p>
+                      <p className="font-semibold text-sm">{formatFCFA(invoice.amount)}</p>
                       <p className={`text-xs ${invoice.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>
-                        {invoice.status}
+                        {translateStatus(invoice.status)}
                       </p>
                     </div>
                   </div>
@@ -280,7 +281,7 @@ export default function ReportingPage() {
                     <div className="text-right">
                       <p className="font-semibold text-sm">{batch.quantity} u.</p>
                       <p className={`text-xs ${batch.status === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>
-                        {batch.status}
+                        {translateStatus(batch.status)}
                       </p>
                     </div>
                   </div>
