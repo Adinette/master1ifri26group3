@@ -320,7 +320,7 @@ export default function CataloguePage() {
       >
 
         {/* ── SIDEBAR ── */}
-        <aside>
+        <aside className="max-lg:mb-6">
           {/* Filtres catégories */}
           <div
             style={{

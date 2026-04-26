@@ -40,8 +40,8 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg" style={{ border: '1px solid rgba(37,99,235,0.15)' }}>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
+      <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100/50 dark:border-zinc-800">
         <h1 className="text-2xl font-bold mb-6 text-center">Connexion - SFMC Benin</h1>
 
         {justRegistered && (
@@ -69,7 +69,7 @@ function LoginPageContent() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border border-zinc-300 rounded-lg px-4 py-3 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-3 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="password"
@@ -77,15 +77,12 @@ function LoginPageContent() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="border border-zinc-300 rounded-lg px-4 py-3 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-3 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             type="submit"
             disabled={loading}
-            className="text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 transition-colors"
-            style={{ backgroundColor: '#2563EB' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2563EB')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
@@ -93,10 +90,10 @@ function LoginPageContent() {
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-300 dark:border-zinc-700" />
+            <div className="w-full border-t border-zinc-300 dark:border-zinc-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-zinc-500">ou</span>
+            <span className="px-2 bg-white dark:bg-zinc-900 text-zinc-500">ou</span>
           </div>
         </div>
 
@@ -109,7 +106,7 @@ function LoginPageContent() {
 
         <p className="text-center text-sm text-zinc-500 mt-6">
           Pas de compte ?{' '}
-          <Link href="/front/auth/register" className="hover:underline font-medium" style={{ color: '#2563EB' }}>
+          <Link href="/front/auth/register" className="text-blue-600 hover:underline font-medium">
             S&apos;inscrire
           </Link>
         </p>
@@ -120,8 +117,8 @@ function LoginPageContent() {
 
 function LoginPageFallback() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg" style={{ border: '1px solid rgba(37,99,235,0.15)' }}>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
+      <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100/50 dark:border-zinc-800">
         <h1 className="text-2xl font-bold mb-2 text-center">Connexion - SFMC Benin</h1>
         <p className="text-sm text-center text-zinc-500">Chargement...</p>
       </div>

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { SessionProvider } from "next-auth/react"
 import { signOut, useSession } from "next-auth/react"
+import { ThemeProvider } from "./lib/theme"
 
 type ProvidersProps = {
   children: React.ReactNode
@@ -164,12 +165,14 @@ function SessionTimeoutManager({ idleTimeoutMs, warningMs }: SessionTimeoutManag
 
 export default function Providers({ children, idleTimeoutSeconds, idleWarningSeconds }: ProvidersProps) {
   return (
-    <SessionProvider>
-      <SessionTimeoutManager
-        idleTimeoutMs={idleTimeoutSeconds * 1000}
-        warningMs={idleWarningSeconds * 1000}
-      />
-      {children}
-    </SessionProvider>
+    <ThemeProvider>
+      <SessionProvider>
+        <SessionTimeoutManager
+          idleTimeoutMs={idleTimeoutSeconds * 1000}
+          warningMs={idleWarningSeconds * 1000}
+        />
+        {children}
+      </SessionProvider>
+    </ThemeProvider>
   )
 }

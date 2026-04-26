@@ -60,11 +60,22 @@ type ReportingPayload = {
     notifications: ServiceStatus
     production: ServiceStatus
   }
+  period?: {
+    from: string | null
+    to: string | null
+    filtered: boolean
+  }
   summary: {
     totalOrders: number
+    pendingOrders: number
+    validatedOrders: number
+    shippedOrders: number
     totalStockItems: number
+    lowStockItems: number
     totalInvoices: number
     paidInvoices: number
+    totalRevenue: number
+    pendingRevenue: number
     totalNotifications: number
     totalBatches: number
     completedBatches: number
@@ -80,30 +91,29 @@ export default function ReportingPage() {
   const [data, setData] = useState<ReportingPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      setLoading(true)
-      setError('')
-
-      try {
-        const response = await fetch('/api/reporting/dashboard')
-        const payload = await response.json()
-
-        if (!response.ok) {
-          throw new Error(payload?.error || 'Erreur de chargement')
-        }
-
-        setData(payload)
-      } catch {
-        setError('Impossible de charger le reporting. Vérifie que le service reporting est démarré sur le port 3009.')
-      } finally {
-        setLoading(false)
-      }
+  const fetchDashboard = async (from?: string, to?: string) => {
+    setLoading(true)
+    setError('')
+    try {
+      const params = new URLSearchParams()
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const qs = params.toString()
+      const response = await fetch(`/api/reporting/dashboard${qs ? `?${qs}` : ''}`)
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload?.error || 'Erreur de chargement')
+      setData(payload)
+    } catch {
+      setError('Impossible de charger le reporting. Vérifie que le service reporting est démarré sur le port 3009.')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchDashboard()
-  }, [])
+  useEffect(() => { fetchDashboard() }, [])
 
   const lowStockItems = data?.stock.filter((item) => item.quantity <= item.minThreshold) ?? []
   const unavailableServices = data
@@ -117,6 +127,48 @@ export default function ReportingPage() {
         <p className="text-zinc-500">
           Vue d&apos;agrégation Phase 7 : commandes, stock, facturation, notifications et production.
         </p>
+      </div>
+
+      {/* Filtres temporels */}
+      <div className="flex flex-wrap items-end gap-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">Du</label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">Au</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800"
+          />
+        </div>
+        <button
+          onClick={() => fetchDashboard(fromDate || undefined, toDate || undefined)}
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+        >
+          Filtrer
+        </button>
+        {(fromDate || toDate) && (
+          <button
+            onClick={() => { setFromDate(''); setToDate(''); fetchDashboard() }}
+            className="text-sm text-zinc-500 hover:text-zinc-800 underline"
+          >
+            Réinitialiser
+          </button>
+        )}
+        {data?.period?.filtered && (
+          <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-full">
+            Période filtrée
+          </span>
+        )}
       </div>
 
       {loading ? (
@@ -141,7 +193,7 @@ export default function ReportingPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
               <p className="text-sm text-zinc-500 mb-1">Commandes</p>
               <p className="text-2xl font-bold">{data.summary.totalOrders}</p>
@@ -161,6 +213,11 @@ export default function ReportingPage() {
               <p className="text-sm text-zinc-500 mb-1">Production</p>
               <p className="text-2xl font-bold">{data.summary.totalBatches}</p>
               <p className="text-xs text-blue-600 mt-1">{data.summary.completedBatches} lot(s) terminés</p>
+            </div>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
+              <p className="text-sm text-zinc-500 mb-1">Revenus encaissés</p>
+              <p className="text-2xl font-bold text-green-700">{(data.summary.totalRevenue ?? 0).toLocaleString()} FCFA</p>
+              <p className="text-xs text-zinc-400 mt-1">{(data.summary.pendingRevenue ?? 0).toLocaleString()} FCFA en attente</p>
             </div>
           </div>
 

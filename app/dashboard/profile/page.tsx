@@ -51,7 +51,7 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium">Mot de passe</p>
                 <p className="text-xs text-zinc-500">Dernière modification inconnue</p>
               </div>
-              <button className="text-sm text-blue-600 hover:underline" disabled>
+              <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-40" disabled>
                 Modifier (bientôt)
               </button>
             </div>
@@ -60,7 +60,7 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium">Vérification email</p>
                 <p className="text-xs text-zinc-500">Non vérifié</p>
               </div>
-              <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
+              <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded-full">
                 En attente
               </span>
             </div>

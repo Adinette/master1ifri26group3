@@ -110,6 +110,7 @@ function BentoCell({
   return (
     <Link
       href="/catalogue"
+      className="max-md:col-span-1!"
       style={{
         gridColumn: span2 ? 'span 2' : 'span 1',
         backgroundColor: dark ? '#0F172A' : 'white',
@@ -282,6 +283,7 @@ export default function HomePage() {
               marginTop: '0.5rem',
               paddingTop: '1.5rem',
               borderTop: '1px solid #E7E5E4',
+              flexWrap: 'wrap',
             }}
           >
             {[

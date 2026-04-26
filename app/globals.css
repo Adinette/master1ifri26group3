@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* ─── Dark mode contrôlé par classe (Tailwind v4) ─── */
+/* `.dark` sur <html> active toutes les classes `dark:` */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ─── Palette Bleu Ardoise SFMC Bénin (dashboard-aligned) ─── */
 :root {
   --background: #F8FAFC;
@@ -12,6 +16,16 @@
   --accent-sky: #0EA5E9;
   --dark: #0F172A;
   --dark-card: #1E293B;
+}
+
+.dark {
+  --background: #09090B;       /* zinc-950 */
+  --foreground: #FAFAFA;       /* zinc-50 */
+  --surface: #18181B;          /* zinc-900 */
+  --surface-muted: #27272A;    /* zinc-800 */
+  --muted: #A1A1AA;            /* zinc-400 */
+  --accent: #3B82F6;           /* blue-500 */
+  --accent-hover: #60A5FA;     /* blue-400 */
 }
 
 @theme inline {
