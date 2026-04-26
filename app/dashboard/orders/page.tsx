@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { formatFCFA, translateStatus } from '../../lib/format'
+import { cachedJson, invalidate } from '../../lib/client-cache'
 
-type OrderStatus = 'pending' | 'validated' | 'shipped' | 'delivered'
+type OrderStatus = 'pending' | 'validated' | 'shipped' | 'delivered' | 'cancelled' | 'failed'
 
 type Order = {
   id: number
@@ -22,7 +23,10 @@ type Product = {
   price: number
 }
 
+// Statuts proposables via le menu déroulant. L'annulation passe par un
+// bouton dédié qui déclenche la saga (libération stock + facture).
 const STATUSES: OrderStatus[] = ['pending', 'validated', 'shipped', 'delivered']
+const TERMINAL_STATUSES: ReadonlySet<OrderStatus> = new Set(['shipped', 'delivered', 'cancelled'])
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -34,21 +38,20 @@ export default function OrdersPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ clientName: '', productId: '', quantity: '1' })
 
-  const fetchData = async () => {
+  const fetchData = async (opts?: { force?: boolean }) => {
     setLoading(true)
     setError('')
 
+    if (opts?.force) {
+      invalidate('/api/orders')
+      invalidate('/api/products')
+    }
+
     try {
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/orders'),
-        fetch('/api/products'),
+      const [ordersData, productsData] = await Promise.all([
+        cachedJson<Order[]>('/api/orders'),
+        cachedJson<Product[]>('/api/products'),
       ])
-
-      if (!ordersRes.ok || !productsRes.ok) {
-        throw new Error('Erreur de chargement')
-      }
-
-      const [ordersData, productsData] = await Promise.all([ordersRes.json(), productsRes.json()])
       setOrders(Array.isArray(ordersData) ? ordersData : [])
       setProducts(Array.isArray(productsData) ? productsData : [])
     } catch {
@@ -108,7 +111,10 @@ export default function OrdersPage() {
 
       setShowModal(false)
       setForm({ clientName: '', productId: '', quantity: '1' })
-      fetchData()
+      // La création impacte stock et factures (saga complet) — on invalide.
+      invalidate('/api/stock')
+      invalidate('/api/invoices')
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -133,7 +139,39 @@ export default function OrdersPage() {
         throw new Error(data?.error || 'Erreur lors de la mise à jour')
       }
 
-      fetchData()
+      fetchData({ force: true })
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur inconnue')
+    }
+  }
+
+  const cancelOrder = async (order: Order) => {
+    if (TERMINAL_STATUSES.has(order.status)) {
+      return
+    }
+
+    const confirmation = window.confirm(
+      `Annuler la commande #${order.id} de ${order.clientName} ?\n\nLe stock réservé sera libéré et la facture associée (si non payée) sera annulée.`
+    )
+    if (!confirmation) return
+
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Annulation depuis le tableau de bord' }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Erreur lors de l'annulation")
+      }
+
+      // L'annulation impacte stock + factures — on invalide aussi pour que
+      // les autres pages voient la mise à jour au prochain affichage.
+      invalidate('/api/stock')
+      invalidate('/api/invoices')
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     }
@@ -149,6 +187,10 @@ export default function OrdersPage() {
         return 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
       case 'delivered':
         return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+      case 'cancelled':
+        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+      case 'failed':
+        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
       default:
         return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
     }
@@ -173,7 +215,7 @@ export default function OrdersPage() {
       </div>
 
       {!loading && !error && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
             <p className="text-xs text-zinc-500 mb-1">Total commandes</p>
             <p className="text-2xl font-bold">{orders.length}</p>
@@ -189,6 +231,10 @@ export default function OrdersPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
             <p className="text-xs text-zinc-500 mb-1">Livrées</p>
             <p className="text-2xl font-bold text-green-600">{orders.filter((order) => order.status === 'delivered').length}</p>
+          </div>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+            <p className="text-xs text-zinc-500 mb-1">Annulées</p>
+            <p className="text-2xl font-bold text-red-600">{orders.filter((order) => order.status === 'cancelled').length}</p>
           </div>
         </div>
       )}
@@ -210,7 +256,7 @@ export default function OrdersPage() {
       ) : error ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-700 dark:text-red-400 text-sm mb-3">{error}</p>
-          <button onClick={fetchData} className="text-sm text-blue-600 hover:underline">
+          <button onClick={() => fetchData({ force: true })} className="text-sm text-blue-600 hover:underline">
             Réessayer
           </button>
         </div>
@@ -230,6 +276,7 @@ export default function OrdersPage() {
                   <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Montant</th>
                   <th className="text-center px-5 py-3.5 font-medium text-zinc-500">Statut</th>
                   <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Changer le statut</th>
+                  <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -252,9 +299,10 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <select
-                        value={order.status}
+                        value={STATUSES.includes(order.status as OrderStatus) ? order.status : ''}
+                        disabled={TERMINAL_STATUSES.has(order.status)}
                         onChange={(event) => updateStatus(order, event.target.value as OrderStatus)}
-                        className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {STATUSES.map((status) => (
                           <option key={status} value={status}>
@@ -262,6 +310,24 @@ export default function OrdersPage() {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => cancelOrder(order)}
+                        disabled={TERMINAL_STATUSES.has(order.status)}
+                        title={
+                          TERMINAL_STATUSES.has(order.status)
+                            ? 'Cette commande ne peut plus être annulée'
+                            : 'Annule la commande, libère le stock et annule la facture associée'
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-zinc-900"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Annuler
+                      </button>
                     </td>
                   </tr>
                 ))}

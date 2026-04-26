@@ -136,6 +136,19 @@ export async function reserveStockForOrder(input: ReserveStockInput) {
     return { updatedStock, movement }
   })
 
+  // Notifie les services intéressés (reporting, notification, production) que
+  // le stock a changé (CDC §3.3 événement StockUpdated).
+  await publishEvent('stock.updated', {
+    productId: input.productId,
+    productName: input.productName,
+    warehouseId: candidate.warehouseId,
+    warehouse: candidate.warehouse,
+    movement: 'OUT',
+    quantity: input.quantity,
+    newQuantity: result.updatedStock.quantity,
+    reason: input.reason ?? 'order.validated',
+  })
+
   if (result.updatedStock.quantity <= candidate.minThreshold) {
     await emitLowStockAlert(
       buildStockAlertPayload({
@@ -160,8 +173,85 @@ export async function reserveStockForOrder(input: ReserveStockInput) {
   }
 }
 
+type ReleaseStockInput = {
+  productId: number
+  productName: string
+  quantity: number
+  warehouseId?: number
+  reason?: string
+}
+
+/**
+ * Libère du stock préalablement réservé pour une commande annulée.
+ * Réincrémente le stock (par défaut sur l'entrepôt #1 ou sur l'entrepôt
+ * indiqué) et trace un mouvement IN en compensation.
+ */
+export async function releaseStockForOrder(input: ReleaseStockInput) {
+  const targetWarehouseId = input.warehouseId ?? 1
+
+  const result = await prisma.$transaction(async (tx) => {
+    const warehouseRecord = await tx.warehouse.upsert({
+      where: { id: targetWarehouseId },
+      update: {},
+      create: { id: targetWarehouseId, name: `Entrepôt ${targetWarehouseId}` },
+    })
+
+    const existingStock = await tx.stock.findFirst({
+      where: { productId: input.productId, warehouseId: targetWarehouseId },
+    })
+
+    const updatedStock = existingStock
+      ? await tx.stock.update({
+          where: { id: existingStock.id },
+          data: { quantity: { increment: input.quantity } },
+        })
+      : await tx.stock.create({
+          data: {
+            productId: input.productId,
+            productName: input.productName,
+            warehouseId: targetWarehouseId,
+            quantity: input.quantity,
+            minThreshold: 10,
+          },
+        })
+
+    const movement = await tx.movement.create({
+      data: {
+        productId: input.productId,
+        productName: input.productName,
+        warehouseId: targetWarehouseId,
+        type: 'IN',
+        quantity: input.quantity,
+        reason: input.reason ?? 'Libération suite à annulation de commande',
+      },
+    })
+
+    return { updatedStock, movement, warehouseName: warehouseRecord.name }
+  })
+
+  await publishEvent('stock.updated', {
+    productId: input.productId,
+    productName: input.productName,
+    warehouseId: targetWarehouseId,
+    warehouse: result.warehouseName,
+    movement: 'IN',
+    quantity: input.quantity,
+    newQuantity: result.updatedStock.quantity,
+    reason: input.reason ?? 'order.cancelled',
+  })
+
+  return {
+    released: true as const,
+    movement: result.movement,
+    stock: result.updatedStock,
+    warehouseId: targetWarehouseId,
+    warehouse: result.warehouseName,
+    newQuantity: result.updatedStock.quantity,
+  }
+}
+
 export async function applyStockMovement(input: MovementInput) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // S'assurer que l'entrepôt existe, sinon le créer
     const warehouseRecord = await tx.warehouse.upsert({
       where: { id: input.warehouseId },
@@ -242,4 +332,18 @@ export async function applyStockMovement(input: MovementInput) {
       },
     }
   })
+
+  // Événement StockUpdated après commit pour reporting/notification (CDC §3.3)
+  await publishEvent('stock.updated', {
+    productId: input.productId,
+    productName: input.productName,
+    warehouseId: input.warehouseId,
+    warehouse: result.stock.warehouse,
+    movement: input.type,
+    quantity: input.quantity,
+    newQuantity: result.stock.quantity,
+    reason: input.reason ?? null,
+  })
+
+  return result
 }

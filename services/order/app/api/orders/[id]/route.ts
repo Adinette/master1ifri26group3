@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json()
     const { status } = body
 
-    const validStatuses = ['pending', 'validated', 'shipped', 'delivered']
+    const validStatuses = ['pending', 'validated', 'shipped', 'delivered', 'cancelled', 'failed']
     if (!validStatuses.includes(status)) {
       return Response.json({ error: 'Statut invalide' }, { status: 400 })
     }

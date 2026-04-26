@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { formatFCFA, translateStatus } from "../lib/format"
@@ -21,6 +21,8 @@ type ReportingPayload = {
     pendingOrders: number
     validatedOrders: number
     shippedOrders: number
+    deliveredOrders?: number
+    cancelledOrders?: number
     totalStockItems: number
     lowStockItems: number
     totalInvoices: number
@@ -53,6 +55,7 @@ export default function DashboardPage() {
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, InfraStatus>>({})
 
   useEffect(() => {
+    // Donnant prioritaire : statistiques principales du dashboard.
     fetch('/api/reporting/dashboard')
       .then(async (r) => {
         const payload = await r.json()
@@ -62,21 +65,27 @@ export default function DashboardPage() {
       .catch(() => setError('Impossible de charger les statistiques. Vérifie que le service reporting est démarré.'))
       .finally(() => setLoading(false))
 
-    fetch('/api/kong-status')
-      .then((r) => r.json())
-      .then((d) => {
-        setKongStatus(d.kong ? 'online' : 'offline')
-        setRabbitStatus(d.rabbitmq ? 'online' : 'offline')
-      })
-      .catch(() => {
-        setKongStatus('offline')
-        setRabbitStatus('offline')
-      })
+    // Health-checks différés d'un tick pour ne pas concurrencer le reporting
+    // au-dessus du 1er paint. Les résultats sont cachés 10s côté proxy.
+    const infraTimer = window.setTimeout(() => {
+      fetch('/api/kong-status')
+        .then((r) => r.json())
+        .then((d) => {
+          setKongStatus(d.kong ? 'online' : 'offline')
+          setRabbitStatus(d.rabbitmq ? 'online' : 'offline')
+        })
+        .catch(() => {
+          setKongStatus('offline')
+          setRabbitStatus('offline')
+        })
 
-    fetch('/api/services-status')
-      .then((r) => r.json())
-      .then((d) => { if (d?.services) setServiceStatuses(d.services) })
-      .catch(() => setServiceStatuses({}))
+      fetch('/api/services-status')
+        .then((r) => r.json())
+        .then((d) => { if (d?.services) setServiceStatuses(d.services) })
+        .catch(() => setServiceStatuses({}))
+    }, 200)
+
+    return () => window.clearTimeout(infraTimer)
   }, [])
 
   const orderStatusCounts = useMemo(() => {
@@ -85,7 +94,11 @@ export default function DashboardPage() {
       pending: data.summary.pendingOrders,
       validated: data.summary.validatedOrders,
       shipped: data.summary.shippedOrders,
-      cancelled: Math.max(0, data.summary.totalOrders - data.summary.pendingOrders - data.summary.validatedOrders - data.summary.shippedOrders),
+      // Backend reporting expose dorénavant cancelledOrders ; on retombe sur
+      // un calcul défensif si un service plus ancien ne le renvoie pas.
+      cancelled:
+        data.summary.cancelledOrders ??
+        data.orders.filter((order) => order.status === 'cancelled').length,
     }
   }, [data])
 
@@ -332,7 +345,7 @@ function orderBadge(status: string) {
 
 /* ── Components ──────────────────────────────────────────────────────── */
 
-function KpiCard({
+const KpiCard = memo(function KpiCard({
   icon,
   label,
   value,
@@ -370,9 +383,9 @@ function KpiCard({
       {sub && <p className="text-xs text-zinc-500 mt-1">{sub}</p>}
     </div>
   )
-}
+})
 
-function BarChart({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
+const BarChart = memo(function BarChart({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
   const max = Math.max(...data.map((d) => d.value), 1)
   const W = 480
   const H = 200
@@ -441,9 +454,9 @@ function BarChart({ data }: { data: Array<{ label: string; value: number; color:
       </svg>
     </div>
   )
-}
+})
 
-function DonutChart({
+const DonutChart = memo(function DonutChart({
   segments,
   centerLabel,
   centerSub,
@@ -457,18 +470,23 @@ function DonutChart({
   const stroke = 22
   const circumference = 2 * Math.PI * radius
 
-  let offset = 0
-  const arcs = segments.map((s) => {
-    const length = total === 0 ? 0 : (s.value / total) * circumference
-    const arc = {
-      ...s,
-      length,
-      offset,
-      pct: total === 0 ? 0 : (s.value / total) * 100,
-    }
-    offset += length
-    return arc
-  })
+  // On évite la mutation d'une variable du scope render (react-hooks/immutability)
+  // en accumulant l'offset via reduce.
+  const arcs = segments.reduce<Array<typeof segments[number] & { length: number; offset: number; pct: number }>>(
+    (acc, s) => {
+      const length = total === 0 ? 0 : (s.value / total) * circumference
+      const previous = acc[acc.length - 1]
+      const offset = previous ? previous.offset + previous.length : 0
+      acc.push({
+        ...s,
+        length,
+        offset,
+        pct: total === 0 ? 0 : (s.value / total) * 100,
+      })
+      return acc
+    },
+    []
+  )
 
   return (
     <div className="flex items-center gap-5">
@@ -526,9 +544,9 @@ function DonutChart({
       </div>
     </div>
   )
-}
+})
 
-function InfraDot({ label, status }: { label: string; status: InfraStatus }) {
+const InfraDot = memo(function InfraDot({ label, status }: { label: string; status: InfraStatus }) {
   const dot =
     status === 'online' ? 'bg-green-500'
     : status === 'offline' ? 'bg-red-500'
@@ -547,4 +565,4 @@ function InfraDot({ label, status }: { label: string; status: InfraStatus }) {
       </span>
     </div>
   )
-}
+})

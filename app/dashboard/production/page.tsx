@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { translateStatus } from '../../lib/format'
+import { cachedJson, invalidate } from '../../lib/client-cache'
 
 type ProductionStatus = 'planned' | 'in_progress' | 'completed'
 
@@ -33,21 +34,20 @@ export default function ProductionPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ productId: '', quantity: '1', startDate: '' })
 
-  const fetchData = async () => {
+  const fetchData = async (opts?: { force?: boolean }) => {
     setLoading(true)
     setError('')
 
+    if (opts?.force) {
+      invalidate('/api/products')
+      invalidate('/api/production')
+    }
+
     try {
-      const [productsRes, batchesRes] = await Promise.all([
-        fetch('/api/products'),
-        fetch('/api/production'),
+      const [productsData, batchesData] = await Promise.all([
+        cachedJson<Product[]>('/api/products'),
+        cachedJson<ProductionBatch[]>('/api/production'),
       ])
-
-      if (!productsRes.ok || !batchesRes.ok) {
-        throw new Error('Erreur de chargement')
-      }
-
-      const [productsData, batchesData] = await Promise.all([productsRes.json(), batchesRes.json()])
       setProducts(Array.isArray(productsData) ? productsData : [])
       setBatches(Array.isArray(batchesData) ? batchesData : [])
     } catch {
@@ -104,7 +104,7 @@ export default function ProductionPage() {
 
       setShowModal(false)
       setForm({ productId: '', quantity: '1', startDate: '' })
-      fetchData()
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -129,7 +129,9 @@ export default function ProductionPage() {
         throw new Error(data?.error || 'Erreur lors de la mise à jour')
       }
 
-      fetchData()
+      // Le passage en 'completed' génère du stock IN — invalider /api/stock
+      if (status === 'completed') invalidate('/api/stock')
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     }
@@ -201,7 +203,7 @@ export default function ProductionPage() {
       ) : error ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-700 dark:text-red-400 text-sm mb-3">{error}</p>
-          <button onClick={fetchData} className="text-sm text-blue-600 hover:underline">
+          <button onClick={() => fetchData({ force: true })} className="text-sm text-blue-600 hover:underline">
             Réessayer
           </button>
         </div>

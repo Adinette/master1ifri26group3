@@ -108,7 +108,7 @@ export default function DashboardSidebar() {
               <span className="text-sm font-bold text-white">S</span>
             </div>
             <div>
-              <span className="text-[0.7rem] font-semibold text-blue-400 dark:text-blue-300 tracking-wider">Bénin ERP</span>
+              <span className="text-[0.7rem] font-semibold text-blue-400 dark:text-blue-300 tracking-wider">SFMC Bénin</span>
               <p className="text-xs text-blue-400 dark:text-zinc-500 leading-none mt-1">Portail client</p>
             </div>
           </Link>

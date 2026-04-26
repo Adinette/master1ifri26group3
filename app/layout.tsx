@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SFMC Benin - Plateforme d operations",
-  description: "Plateforme microservices de supervision, de pilotage et de coordination pour SFMC Benin.",
+  title: "SFMC Bénin — Plateforme d'opérations",
+  description: "Plateforme microservices de supervision, de pilotage et de coordination pour SFMC Bénin.",
 };
 
 export default function RootLayout({

@@ -42,7 +42,7 @@ function LoginPageContent() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
       <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100/50 dark:border-zinc-800">
-        <h1 className="text-2xl font-bold mb-6 text-center">Connexion - SFMC Benin</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Connexion — SFMC Bénin</h1>
 
         {justRegistered && (
           <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm text-center">
@@ -119,7 +119,7 @@ function LoginPageFallback() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
       <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100/50 dark:border-zinc-800">
-        <h1 className="text-2xl font-bold mb-2 text-center">Connexion - SFMC Benin</h1>
+        <h1 className="text-2xl font-bold mb-2 text-center">Connexion — SFMC Bénin</h1>
         <p className="text-sm text-center text-zinc-500">Chargement...</p>
       </div>
     </div>

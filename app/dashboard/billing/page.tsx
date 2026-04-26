@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { formatFCFA, translateStatus } from '../../lib/format'
+import { cachedJson, invalidate } from '../../lib/client-cache'
 
 type Order = {
   id: number
@@ -44,25 +45,21 @@ export default function BillingPage() {
   const [invoiceForm, setInvoiceForm] = useState({ orderId: '', dueDate: '' })
   const [paymentForm, setPaymentForm] = useState({ invoiceId: '', amount: '', method: 'cash' })
 
-  const fetchData = async () => {
+  const fetchData = async (opts?: { force?: boolean }) => {
     setLoading(true)
     setError('')
 
+    if (opts?.force) {
+      invalidate('/api/orders')
+      invalidate('/api/invoices')
+      invalidate('/api/payments')
+    }
+
     try {
-      const [ordersRes, invoicesRes, paymentsRes] = await Promise.all([
-        fetch('/api/orders'),
-        fetch('/api/invoices'),
-        fetch('/api/payments'),
-      ])
-
-      if (!ordersRes.ok || !invoicesRes.ok || !paymentsRes.ok) {
-        throw new Error('Erreur de chargement')
-      }
-
       const [ordersData, invoicesData, paymentsData] = await Promise.all([
-        ordersRes.json(),
-        invoicesRes.json(),
-        paymentsRes.json(),
+        cachedJson<Order[]>('/api/orders'),
+        cachedJson<Invoice[]>('/api/invoices'),
+        cachedJson<Payment[]>('/api/payments'),
       ])
 
       setOrders(Array.isArray(ordersData) ? ordersData : [])
@@ -132,7 +129,7 @@ export default function BillingPage() {
 
       setShowInvoiceModal(false)
       setInvoiceForm({ orderId: '', dueDate: '' })
-      fetchData()
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -163,7 +160,7 @@ export default function BillingPage() {
 
       setShowPaymentModal(false)
       setPaymentForm({ invoiceId: '', amount: '', method: 'cash' })
-      fetchData()
+      fetchData({ force: true })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -232,7 +229,7 @@ export default function BillingPage() {
       ) : error ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-700 dark:text-red-400 text-sm mb-3">{error}</p>
-          <button onClick={fetchData} className="text-sm text-blue-600 hover:underline">
+          <button onClick={() => fetchData({ force: true })} className="text-sm text-blue-600 hover:underline">
             Réessayer
           </button>
         </div>

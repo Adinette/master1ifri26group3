@@ -1,7 +1,9 @@
-# SFMC Benin
+# SFMC Bénin
 
-Plateforme microservices de supervision et pilotage pour SFMC Benin.
-Le depot technique conserve le nom tp_twm.
+Plateforme microservices de supervision et pilotage pour SFMC Bénin.
+Le dépôt technique conserve le nom tp_twm.
+
+> Branche active : `phase-12-ui-theme-dashboard` (itération finale Phase 12).
 
 ## Stack
 
@@ -116,6 +118,79 @@ Appeler ces endpoints apres demarrage local:
   - suppression de l export non autorise dans la route app/api/auth/[...nextauth]/route.ts
 - Build racine valide apres correction.
 - Build services/production valide.
+
+## Phase 12 - Itération finale (avril 2026)
+
+Cette dernière passe consolide trois axes : conformité métier (saga d annulation),
+performance perceptive du dashboard, et cohérence visuelle de la marque.
+
+### 1. Annulation de commande - saga complète
+
+- Endpoint `POST /api/orders/:id/cancel` orchestre la saga :
+  - Inventory : `POST /api/stock/release` libère le stock réservé.
+  - Billing : `POST /api/invoices/cancel-by-order/:orderId` annule les factures non payées.
+  - Order : statut `cancelled`, publication `order.cancelled` sur RabbitMQ.
+- Frontend : bouton Annuler avec confirmation sur `/dashboard/orders`.
+- Reporting : KPI `cancelledOrders` ajouté au tableau de bord.
+- Inventory publie `stock.updated` sur **tout** mouvement (in / out / adjust / release)
+  pour que reporting reste en phase avec le stock réel.
+
+### 2. Performance du dashboard
+
+- Proxy `/api/reporting/dashboard` : cache mémoire 30 s + stale-while-error
+  (ressert l ancienne copie si reporting plante).
+- Reporting `dashboard/route.ts` : timeout 800 ms par appel micro-service
+  (`AbortSignal.timeout`) et bascule en `available:false` si un micro est lent.
+- `/api/services-status` et `/api/kong-status` : cache 10 s, timeout 600 ms par probe,
+  dédoublonnage des requêtes concurrentes (in-flight coalescing).
+- `app/dashboard/page.tsx` : `React.memo` sur `KpiCard`, `BarChart`, `DonutChart`,
+  `InfraDot` ; les health-checks d infra sont différés de 200 ms après le premier paint
+  pour donner la priorité réseau au reporting.
+- Helper client `app/lib/client-cache.ts` : cache mémoire 5 s + déduplication
+  des fetches GET, adopté dans `/dashboard/orders`, `/dashboard/billing`,
+  `/dashboard/production`. Les mutations invalident proprement (cross-page :
+  l annulation d une commande invalide stock + factures).
+- Correction `react-hooks/immutability` (React 19) sur `DonutChart` :
+  remplacement de la mutation d offset par un `reduce`.
+
+### 3. Cohérence de marque
+
+- Marque unifiée en « SFMC Bénin » partout dans l UI :
+  - `app/components/DashboardSidebar.tsx` (desktop) corrigé (était « Bénin ERP »).
+  - `app/layout.tsx` : metadata title et description avec accents.
+  - `app/front/auth/login/page.tsx` : titre de connexion aligné.
+- Identifiants techniques laissés intacts : domaine `sfmc-benin.bj`, animation CSS
+  `sfmc-ticker`, URL WhatsApp encodées.
+
+### 4. Vérifications
+
+- `npx tsc --noEmit` : OK sur le root et les microservices (après `prisma generate`
+  par service en mono-repo).
+- `npx eslint app/**/*.{ts,tsx}` : aucune erreur introduite par cette livraison.
+- Builds Next.js et Prisma stables.
+
+### Fichiers clés ajoutés ou modifiés
+
+Nouveaux endpoints :
+
+- `services/inventory/app/api/stock/release/route.ts`
+- `services/billing/app/api/invoices/cancel-by-order/[orderId]/route.ts`
+- `services/order/app/api/orders/[id]/cancel/route.ts`
+- `app/api/orders/[id]/cancel/route.ts` (proxy)
+
+Nouveaux helpers :
+
+- `app/lib/client-cache.ts`
+- `services/inventory/lib/stock-workflow.ts` : `releaseStockForOrder`
+- `services/billing/lib/billing-store.ts` : `cancelInvoice`, `cancelInvoicesByOrder`
+
+Mises à jour notables :
+
+- `app/api/reporting/dashboard/route.ts` (cache 30 s)
+- `app/api/services-status/route.ts`, `app/api/kong-status/route.ts` (cache + coalescing)
+- `services/reporting/app/api/dashboard/route.ts` (timeouts + KPI annulations)
+- `app/dashboard/page.tsx`, `app/dashboard/orders/page.tsx`, `app/dashboard/billing/page.tsx`,
+  `app/dashboard/production/page.tsx`
 
 ## Arborescence utile
 

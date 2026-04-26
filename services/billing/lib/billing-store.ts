@@ -31,6 +31,9 @@ type CreatePaymentInput = {
   invoiceId: number
   amount: number
   method: string
+  gatewayProvider?: string
+  gatewayTransactionId?: string
+  gatewayStatus?: string
 }
 
 const globalForBillingStore = global as unknown as { billingPool?: Pool }
@@ -103,6 +106,32 @@ export async function createInvoice(input: CreateInvoiceInput) {
   return mapInvoice(rows[0])
 }
 
+export async function cancelInvoice(invoiceId: number) {
+  const { rows } = await getPool().query<InvoiceRow>(
+    "update invoices set status = 'cancelled', updated_at = now() where id = $1 and status not in ('paid', 'cancelled') returning id, order_id, client_name, amount, status, due_date, paid_at, created_at, updated_at",
+    [invoiceId]
+  )
+
+  if (!rows[0]) {
+    return null
+  }
+
+  return mapInvoice(rows[0])
+}
+
+/**
+ * Annule toutes les factures liées à une commande qui ne sont ni payées
+ * ni déjà annulées. Utilisé par le saga d'annulation côté Order Service.
+ */
+export async function cancelInvoicesByOrder(orderId: number) {
+  const { rows } = await getPool().query<InvoiceRow>(
+    "update invoices set status = 'cancelled', updated_at = now() where order_id = $1 and status not in ('paid', 'cancelled') returning id, order_id, client_name, amount, status, due_date, paid_at, created_at, updated_at",
+    [orderId]
+  )
+
+  return rows.map((row) => mapInvoice(row))
+}
+
 export async function listPayments() {
   const { rows } = await getPool().query<PaymentRow>(
     'select id, invoice_id, amount, method, created_at from payments order by created_at desc'
@@ -119,8 +148,8 @@ export async function createPaymentAndMarkInvoicePaid(input: CreatePaymentInput)
     await client.query('begin')
 
     const { rows: paymentRows } = await client.query<PaymentRow>(
-      'insert into payments (invoice_id, amount, method) values ($1, $2, $3) returning id, invoice_id, amount, method, created_at',
-      [input.invoiceId, input.amount, input.method]
+      'insert into payments (invoice_id, amount, method, gateway_provider, gateway_transaction_id, gateway_status) values ($1, $2, $3, $4, $5, $6) returning id, invoice_id, amount, method, created_at',
+      [input.invoiceId, input.amount, input.method, input.gatewayProvider ?? null, input.gatewayTransactionId ?? null, input.gatewayStatus ?? null]
     )
 
     const { rows: invoiceRows } = await client.query<InvoiceRow>(

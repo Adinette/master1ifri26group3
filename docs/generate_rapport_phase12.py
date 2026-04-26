@@ -179,6 +179,117 @@ CLONE_STEPS = [
 ]
 
 
+# ----------------------------------------------------------------------
+# Iteration finale Phase 12 (avril 2026) - consolidation metier + perf
+# ----------------------------------------------------------------------
+
+
+FINAL_KPIS = [
+    ['Endpoints saga annulation ajoutes', '4'],
+    ['Cache backend ajoutes', '3 (reporting 30s, services-status 10s, kong-status 10s)'],
+    ['Timeouts microservices', '800 ms (reporting) / 600 ms (probes)'],
+    ['Composants memoises (React.memo)', '4 (KpiCard, BarChart, DonutChart, InfraDot)'],
+    ['Helper client de cache', '1 (app/lib/client-cache.ts)'],
+    ['Pages adoptant le cache client', '3 (orders, billing, production)'],
+    ['Incoherences de marque corrigees', '5 (sidebar, layout, login)'],
+    ['Erreurs lint introduites', '0'],
+]
+
+
+FINAL_DELIVERABLES = [
+    ['services/inventory/lib/stock-workflow.ts', 'Mise a jour',
+     'Ajout releaseStockForOrder + publication stock.updated sur tout mouvement (in/out/adjust/release).'],
+    ['services/inventory/app/api/stock/release/route.ts', 'Nouveau',
+     'Endpoint POST pour liberer le stock reserve a une commande.'],
+    ['services/billing/lib/billing-store.ts', 'Mise a jour',
+     'Ajout cancelInvoice et cancelInvoicesByOrder pour annulation des factures non payees.'],
+    ['services/billing/app/api/invoices/cancel-by-order/[orderId]/route.ts', 'Nouveau',
+     'Endpoint POST pour annuler toutes les factures d une commande.'],
+    ['services/order/app/api/orders/[id]/cancel/route.ts', 'Nouveau',
+     'Saga d annulation : libere stock, annule factures, met a jour statut, publie order.cancelled.'],
+    ['services/order/app/api/orders/[id]/route.ts', 'Mise a jour',
+     'Acceptation des statuts cancelled et failed sur PUT.'],
+    ['services/reporting/app/api/dashboard/route.ts', 'Mise a jour',
+     'Timeout 800 ms par appel + exposition KPIs cancelledOrders et deliveredOrders.'],
+    ['app/api/orders/[id]/cancel/route.ts', 'Nouveau',
+     'Proxy d annulation, transmet le cookie de session vers Order Service.'],
+    ['app/api/reporting/dashboard/route.ts', 'Mise a jour',
+     'Cache memoire 30 s avec stale-while-error en cas de panne reporting.'],
+    ['app/api/services-status/route.ts', 'Mise a jour',
+     'Cache 10 s, timeout 600 ms par probe, coalescing in-flight des requetes.'],
+    ['app/api/kong-status/route.ts', 'Mise a jour',
+     'Cache 10 s, timeout 600 ms, coalescing in-flight.'],
+    ['app/lib/client-cache.ts', 'Nouveau',
+     'Helper cachedJson + invalidate : cache memoire 5 s et deduplication des fetches GET.'],
+    ['app/dashboard/page.tsx', 'Mise a jour',
+     'React.memo sur KpiCard/BarChart/DonutChart/InfraDot, fetch infra differe de 200 ms, fix mutation DonutChart.'],
+    ['app/dashboard/orders/page.tsx', 'Mise a jour',
+     'Bouton Annuler + KPI Annulees + adoption client-cache + invalidation cross-page.'],
+    ['app/dashboard/billing/page.tsx', 'Mise a jour',
+     'Adoption client-cache, invalidation des caches orders/invoices/payments apres mutation.'],
+    ['app/dashboard/production/page.tsx', 'Mise a jour',
+     'Adoption client-cache, invalidation /api/stock au passage en completed.'],
+    ['app/components/DashboardSidebar.tsx', 'Fix coherence',
+     'Bloc desktop : Benin ERP -> SFMC Benin (alignement avec le reste du portail).'],
+    ['app/layout.tsx', 'Fix coherence',
+     'Metadata : SFMC Benin avec accent + Plateforme d operations corrige.'],
+    ['app/front/auth/login/page.tsx', 'Fix coherence',
+     'Titre Connexion - SFMC Benin -> Connexion -- SFMC Benin (avec accent).'],
+]
+
+
+CANCEL_SAGA_STEPS = [
+    'Frontend ouvre POST /api/orders/:id/cancel via le bouton Annuler de /dashboard/orders.',
+    'Le proxy Next.js relaie la requete vers Order Service avec le cookie de session.',
+    'Order Service appelle Inventory : POST /api/stock/release (libere le stock reserve).',
+    'Order Service appelle Billing : POST /api/invoices/cancel-by-order/:orderId (annule les factures non payees).',
+    'Order Service met le statut de la commande a cancelled et publie order.cancelled sur RabbitMQ.',
+    'Notification consumer ecoute order.cancelled et notifie le client.',
+    'Reporting voit le KPI cancelledOrders augmenter et stock.updated mettre a jour les niveaux.',
+]
+
+
+PERF_OPTIMIZATIONS = [
+    ['Proxy reporting', 'Cache memoire 30 s + stale-while-error',
+     'Le dashboard supporte une panne courte du service reporting sans afficher d erreur.'],
+    ['Appels micros depuis reporting', 'Timeout 800 ms (AbortSignal.timeout)',
+     'Si un micro est lent, on bascule en mode degrade au lieu de bloquer la page.'],
+    ['Probes infra (Kong + services)', 'Cache 10 s + coalescing in-flight + timeout 600 ms',
+     '9 probes simultanees sont fusionnees en une seule requete reseau cache 10 s.'],
+    ['Composants graphiques', 'React.memo (4 composants)',
+     'Plus de re-render a chaque tick du SessionTimeoutManager (1 tick / s).'],
+    ['Fetch infra dashboard', 'Differe de 200 ms apres le 1er paint',
+     'Le reporting recoit la priorite reseau pour le 1er rendu de la page.'],
+    ['Helper client', 'cachedJson + invalidate (5 s)',
+     'Navigation orders / billing / production sans re-fetch si donnees deja en memoire.'],
+    ['DonutChart', 'reduce au lieu de let offset (mutation)',
+     'Conforme a la regle react-hooks/immutability de React 19 / Next 16.'],
+]
+
+
+BRANDING_FIXES = [
+    ['app/components/DashboardSidebar.tsx (desktop)', 'Benin ERP', 'SFMC Benin'],
+    ['app/layout.tsx (title)', 'SFMC Benin - Plateforme d operations', 'SFMC Benin -- Plateforme d operations (accents)'],
+    ['app/layout.tsx (description)', '... pour SFMC Benin.', '... pour SFMC Benin. (avec accent)'],
+    ['app/front/auth/login/page.tsx (h1 #1)', 'Connexion - SFMC Benin', 'Connexion -- SFMC Benin (accent)'],
+    ['app/front/auth/login/page.tsx (h1 #2)', 'Connexion - SFMC Benin', 'Connexion -- SFMC Benin (accent)'],
+]
+
+
+FINAL_VALIDATION_ROWS = [
+    ['Compilation TypeScript root', 'npx tsc --noEmit -p tsconfig.json', 'Exit 0'],
+    ['Compilation TypeScript order/inventory/billing', 'npx tsc --noEmit -p services/<svc>/tsconfig.json', 'Exit 0'],
+    ['Compilation TypeScript reporting', 'npx tsc --noEmit -p services/reporting/tsconfig.json', 'Exit 0 apres prisma generate'],
+    ['Lint UI', 'npx eslint app/**/*.{ts,tsx}', '0 erreur introduite par cette livraison'],
+    ['Saga annulation', 'Bouton Annuler sur /dashboard/orders puis V des KPIs',
+     'Stock libere, facture annulee, statut cancelled, KPI cancelledOrders +1'],
+    ['Cache reporting (resilience)', 'Couper reporting puis recharger /dashboard',
+     'Affichage de l ancienne snapshot avec badge donnees partielles'],
+    ['Coherence marque', 'Sidebar desktop + login + onglet navigateur',
+     'SFMC Benin partout, plus aucune occurrence de Benin ERP'],
+]
+
+
 doc = Document()
 
 
@@ -272,7 +383,8 @@ def build_document() -> None:
         '6. Validation effectuee',
         '7. Problemes rencontres et solutions',
         '8. Parametrage et mode operatoire',
-        '9. Suite recommandee',
+        '9. Iteration finale Phase 12 (avril 2026)',
+        '10. Suite recommandee',
     ]
     for item in toc_items:
         doc.add_paragraph(item)
@@ -442,9 +554,72 @@ def build_document() -> None:
     add_bullet('Ouvrir /dashboard/services et confirmer la disponibilite Kong, RabbitMQ et microservices.')
     add_bullet('Verifier la persistance du choix : recharger la page, le theme reste applique.')
 
-    # 9. Suite
+    # 9bis. Iteration finale Phase 12
     doc.add_paragraph()
-    doc.add_heading('9. Suite recommandee', level=1)
+    doc.add_heading(
+        '9. Iteration finale Phase 12 (avril 2026)', level=1
+    )
+    doc.add_paragraph(
+        'Apres la livraison initiale de la Phase 12 (theme + dashboard + audit UI), '
+        'une derniere passe a ete realisee sur trois axes critiques : la conformite '
+        'metier (saga d annulation de commande), la performance perceptive du '
+        'dashboard, et la coherence visuelle de la marque SFMC Benin a travers '
+        'l ensemble du portail.'
+    )
+
+    doc.add_heading('9.1 Indicateurs de l iteration finale', level=2)
+    add_table(['Indicateur', 'Valeur'], FINAL_KPIS)
+
+    doc.add_heading('9.2 Saga d annulation de commande', level=2)
+    doc.add_paragraph(
+        'L annulation d une commande implique trois services dans l ordre. Chacun '
+        'expose un endpoint dedie ; l Order Service joue le role d orchestrateur :'
+    )
+    for step in CANCEL_SAGA_STEPS:
+        add_bullet(step)
+    doc.add_paragraph('Endpoints introduits :')
+    add_code(
+        'POST /api/orders/:id/cancel              (Order, orchestrateur)\n'
+        'POST /api/stock/release                  (Inventory)\n'
+        'POST /api/invoices/cancel-by-order/:id   (Billing)\n'
+        'POST /api/orders/:id/cancel              (Frontend proxy Next.js)'
+    )
+    doc.add_paragraph(
+        'Le KPI cancelledOrders est expose par le reporting et affiche dans la '
+        'carte Annulees du dashboard et de la page Commandes.'
+    )
+
+    doc.add_heading('9.3 Optimisations de performance', level=2)
+    add_table(['Cible', 'Mecanisme', 'Effet'], PERF_OPTIMIZATIONS)
+    doc.add_paragraph('Helper client introduit :')
+    add_code(
+        '// app/lib/client-cache.ts\n'
+        'await cachedJson<Order[]>(\'/api/orders\')         // GET cache 5 s\n'
+        'invalidate(\'/api/orders\')                         // apres POST/PUT/DELETE\n'
+        'invalidate(\'/api/stock\') ; invalidate(\'/api/invoices\')  // saga annulation'
+    )
+
+    doc.add_heading('9.4 Coherence de la marque', level=2)
+    doc.add_paragraph(
+        'Un audit visuel a detecte une incoherence : la sidebar desktop du dashboard '
+        'affichait "Benin ERP" tandis que tout le reste du portail utilise '
+        '"SFMC Benin". Quatre points de divergence ont ete identifies et alignes :'
+    )
+    add_table(['Fichier', 'Avant', 'Apres'], BRANDING_FIXES)
+    doc.add_paragraph(
+        'Les identifiants techniques (sfmc-benin.bj, animation CSS sfmc-ticker, '
+        'URL WhatsApp encodees) n ont volontairement pas ete modifies.'
+    )
+
+    doc.add_heading('9.5 Validation effectuee', level=2)
+    add_table(['Controle', 'Execution', 'Resultat'], FINAL_VALIDATION_ROWS)
+
+    doc.add_heading('9.6 Fichiers livres dans cette iteration', level=2)
+    add_table(['Fichier', 'Type', 'Apport'], FINAL_DELIVERABLES)
+
+    # 10. Suite
+    doc.add_paragraph()
+    doc.add_heading('10. Suite recommandee', level=1)
     add_bullet('Internationalisation des libelles (FR/EN) sur le selecteur de theme et le dashboard.')
     add_bullet('Ajout de filtres temporels sur le dashboard (jour / semaine / mois).')
     add_bullet('Sauvegarde du theme cote serveur dans le profil utilisateur (table users).')
