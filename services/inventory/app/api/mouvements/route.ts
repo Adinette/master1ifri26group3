@@ -7,7 +7,8 @@ export async function GET() {
   try {
     const movements = await prisma.movement.findMany({ orderBy: { createdAt: 'desc' } })
     return Response.json(movements)
-  } catch {
+  } catch (error) {
+    console.error('[Inventory GET /api/mouvements] Error:', error)
     return Response.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

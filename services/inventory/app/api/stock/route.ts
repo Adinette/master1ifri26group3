@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const stocks = await prisma.stock.findMany({ orderBy: { productName: 'asc' } })
     return Response.json(stocks)
-  } catch {
+  } catch (error) {
+    console.error('[Inventory GET /api/stock] Error:', error)
     return Response.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
       data: { productId, productName, warehouseId, warehouse, quantity: quantity || 0, minThreshold: minThreshold || 10 }
     })
     return Response.json(stock, { status: 201 })
-  } catch {
+  } catch (error) {
+    console.error('[Inventory POST /api/stock] Error:', error)
     return Response.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

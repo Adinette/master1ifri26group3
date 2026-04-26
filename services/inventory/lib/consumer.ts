@@ -21,6 +21,8 @@ export async function startConsumer() {
     await ch.assertExchange(EXCHANGE, 'topic', { durable: true })
     const q = await ch.assertQueue('inventory.stock-updated', { durable: true })
     await ch.bindQueue(q.queue, EXCHANGE, 'stock.updated')
+    const qFailed = await ch.assertQueue('inventory.order-failed', { durable: true })
+    await ch.bindQueue(qFailed.queue, EXCHANGE, 'order.failed')
 
     console.log('🐇 Consumer RabbitMQ inventory démarré — en attente de stock.updated')
 
@@ -59,6 +61,30 @@ export async function startConsumer() {
       }
 
       ch.ack(msg)
+    })
+
+    ch.consume(qFailed.queue, async (msg) => {
+      if (!msg) return
+      const data = JSON.parse(msg.content.toString())
+
+      try {
+        if (data?.reservedStock) {
+          await applyStockMovement({
+            productId: Number(data.productId),
+            productName: String(data.productName),
+            warehouseId: Number(data.warehouseId ?? 1),
+            warehouse: typeof data.warehouse === 'string' ? data.warehouse : 'Usine principale',
+            type: 'IN',
+            quantity: Number(data.quantity),
+            reason: `Compensation saga order.failed #${data.orderId ?? 'n/a'}`,
+          })
+          console.log(`♻️ Compensation stock appliquée pour order.failed #${data.orderId}`)
+        }
+      } catch (error) {
+        console.error('❌ Erreur compensation order.failed:', error)
+      } finally {
+        ch.ack(msg)
+      }
     })
   } catch (error) {
     consumerStarted = false

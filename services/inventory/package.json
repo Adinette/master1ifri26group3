@@ -2,11 +2,11 @@
   "name": "inventory",
   "version": "0.1.0",
   "private": true,
-"scripts": {
-  "dev": "next dev -p 3004",
-  "build": "node ./node_modules/prisma/build/index.js generate && next build --webpack",
-  "start": "next start -p 3004"
-},
+  "scripts": {
+    "dev": "next dev --webpack -p 3004",
+    "build": "node ./node_modules/prisma/build/index.js generate && next build --webpack",
+    "start": "next start -p 3004"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",

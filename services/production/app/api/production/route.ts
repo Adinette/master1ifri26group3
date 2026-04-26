@@ -8,8 +8,9 @@ export async function GET() {
     const prisma = await getPrisma()
     const batches = await prisma.productionBatch.findMany({ orderBy: { createdAt: 'desc' } })
     return Response.json(batches)
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('[Production Service GET /api/production] Error:', error)
+    return Response.json({ error: 'Erreur serveur', details: String(error) }, { status: 500 })
   }
 }
 
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
       data: { productId, productName, quantity, status: 'planned', startDate: new Date(startDate) }
     })
     return Response.json(batch, { status: 201 })
-  } catch {
-    return Response.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('[Production Service POST /api/production] Error:', error)
+    return Response.json({ error: 'Erreur serveur', details: String(error) }, { status: 500 })
   }
 }

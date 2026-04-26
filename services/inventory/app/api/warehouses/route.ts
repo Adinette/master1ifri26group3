@@ -10,7 +10,8 @@ export async function GET() {
       },
     })
     return Response.json(warehouses)
-  } catch {
+  } catch (error) {
+    console.error('[Inventory GET /api/warehouses] Error:', error)
     return Response.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
@@ -25,7 +26,8 @@ export async function POST(req: NextRequest) {
       data: { name, location },
     })
     return Response.json(warehouse, { status: 201 })
-  } catch {
+  } catch (error) {
+    console.error('[Inventory POST /api/warehouses] Error:', error)
     return Response.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
