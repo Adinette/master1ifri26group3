@@ -18,7 +18,7 @@ une authentification centralisée (NextAuth + JWT).
 > - ANATO K. Freddy
 > - DOUGLOUI Adinette
 >
-> Cahier des charges complet : `docs/CAHIER DES CHARGES DÉTAILLÉ-Bon.pdf`.
+> Cahier des charges complet : `docs/Cahier_des_charges.pdf`.
 
 ## Stack
 
@@ -198,89 +198,30 @@ Appeler ces endpoints après le démarrage local (déclenche l'abonnement aux fi
 - <http://localhost:3006/api/init>
 - <http://localhost:3008/api/init>
 
-## Correctifs inclus dans cette livraison
+## Fonctionnalités clés livrées
 
-- Correction JSX de la sidebar dashboard.
-- Stabilisation du build de `services/production` avec un client Prisma `lazy`.
-- Correction Next.js 16 sur l'auth :
-  - extraction de la config NextAuth dans `app/lib/auth-options.ts` ;
-  - suppression de l'export non autorisé dans la route
-    `app/api/auth/[...nextauth]/route.ts`.
-- Build racine valide après correction.
-- Build `services/production` valide.
+La livraison couvre les principaux processus du cahier des charges, avec une
+coordination distribuée par événements RabbitMQ et une orchestration côté BFF.
 
-## Phase 12 — Itération finale (avril 2026)
+- **Authentification** : NextAuth (credentials + Google OAuth), JWT, sessions
+  partagées entre les microservices.
+- **Catalogue & stock** : CRUD produits, mouvements multi-types
+  (`in` / `out` / `adjust` / `release`), seuils d'alerte automatiques.
+- **Commandes** : cycle de vie complet (`pending` → `validated` → `shipped`),
+  réservation automatique de stock à la création.
+- **Saga d'annulation distribuée** : `POST /api/orders/:id/cancel` libère le
+  stock (Inventory), annule les factures (Billing), publie `order.cancelled`
+  sur RabbitMQ.
+- **Production** : création de lots, passage à `completed` qui republie
+  `stock.updated` pour réapprovisionner automatiquement.
+- **Notifications** : consumer dédié écoutant `order.created`,
+  `payment.confirmed`, `stock.alert`.
+- **Reporting / Dashboard** : KPIs temps réel agrégés depuis tous les
+  microservices, avec timeouts (800 ms) et cache *stale-while-error* (30 s)
+  pour rester réactif même en cas de panne partielle.
 
-Cette dernière passe consolide trois axes : conformité métier (saga d'annulation),
-performance perceptive du dashboard, et cohérence visuelle de la marque.
-
-### 1. Annulation de commande — saga complète
-
-- Endpoint `POST /api/orders/:id/cancel` orchestre la saga :
-  - **Inventory** : `POST /api/stock/release` libère le stock réservé.
-  - **Billing** : `POST /api/invoices/cancel-by-order/:orderId` annule les factures non payées.
-  - **Order** : statut `cancelled`, publication de `order.cancelled` sur RabbitMQ.
-- Frontend : bouton « Annuler » avec confirmation sur `/dashboard/orders`.
-- Reporting : KPI `cancelledOrders` ajouté au tableau de bord.
-- Inventory publie `stock.updated` sur **tout** mouvement (`in` / `out` / `adjust` / `release`)
-  pour que reporting reste en phase avec le stock réel.
-
-### 2. Performance du dashboard
-
-- Proxy `/api/reporting/dashboard` : cache mémoire 30 s + stale-while-error
-  (ressert l'ancienne copie si reporting plante).
-- Reporting `dashboard/route.ts` : timeout 800 ms par appel micro-service
-  (`AbortSignal.timeout`) et bascule en `available: false` si un micro est lent.
-- `/api/services-status` et `/api/kong-status` : cache 10 s, timeout 600 ms par probe,
-  dédoublonnage des requêtes concurrentes (in-flight coalescing).
-- `app/dashboard/page.tsx` : `React.memo` sur `KpiCard`, `BarChart`, `DonutChart`,
-  `InfraDot` ; les health-checks d'infra sont différés de 200 ms après le premier
-  paint pour donner la priorité réseau au reporting.
-- Helper client `app/lib/client-cache.ts` : cache mémoire 5 s + déduplication
-  des fetches GET, adopté dans `/dashboard/orders`, `/dashboard/billing`,
-  `/dashboard/production`. Les mutations invalident proprement (cross-page :
-  l'annulation d'une commande invalide stock + factures).
-- Correction `react-hooks/immutability` (React 19) sur `DonutChart` :
-  remplacement de la mutation d'offset par un `reduce`.
-
-### 3. Cohérence de marque
-
-- Marque unifiée en « SFMC Bénin » partout dans l'UI :
-  - `app/components/DashboardSidebar.tsx` (desktop) corrigé (était « Bénin ERP »).
-  - `app/layout.tsx` : metadata `title` et `description` avec accents.
-  - `app/front/auth/login/page.tsx` : titre de connexion aligné.
-- Identifiants techniques laissés intacts : domaine `sfmc-benin.bj`, animation CSS
-  `sfmc-ticker`, URL WhatsApp encodées.
-
-### 4. Vérifications
-
-- `npx tsc --noEmit` : OK sur le root et les microservices (après `prisma generate`
-  par service en mono-repo).
-- `npx eslint app/**/*.{ts,tsx}` : aucune erreur introduite par cette livraison.
-- Builds Next.js et Prisma stables.
-
-### Fichiers clés ajoutés ou modifiés
-
-**Nouveaux endpoints :**
-
-- `services/inventory/app/api/stock/release/route.ts`
-- `services/billing/app/api/invoices/cancel-by-order/[orderId]/route.ts`
-- `services/order/app/api/orders/[id]/cancel/route.ts`
-- `app/api/orders/[id]/cancel/route.ts` (proxy)
-
-**Nouveaux helpers :**
-
-- `app/lib/client-cache.ts`
-- `services/inventory/lib/stock-workflow.ts` : `releaseStockForOrder`
-- `services/billing/lib/billing-store.ts` : `cancelInvoice`, `cancelInvoicesByOrder`
-
-**Mises à jour notables :**
-
-- `app/api/reporting/dashboard/route.ts` (cache 30 s)
-- `app/api/services-status/route.ts`, `app/api/kong-status/route.ts` (cache + coalescing)
-- `services/reporting/app/api/dashboard/route.ts` (timeouts + KPI annulations)
-- `app/dashboard/page.tsx`, `app/dashboard/orders/page.tsx`,
-  `app/dashboard/billing/page.tsx`, `app/dashboard/production/page.tsx`
+> Détails techniques d'implémentation et historique des phases :
+> voir `docs/Rapport_Projet_TWM_Phase12.docx`.
 
 ## Arborescence utile
 
@@ -298,7 +239,7 @@ performance perceptive du dashboard, et cohérence visuelle de la marque.
 
 ## Documents complémentaires
 
-- `docs/CAHIER DES CHARGES DÉTAILLÉ-Bon.pdf` : cahier des charges fonctionnel.
+- `docs/Cahier_des_charges.pdf` : cahier des charges fonctionnel.
 - `docs/Guide_Google_OAuth.html` : guide d'intégration Google OAuth.
 - `docs/Rapport_Projet_TWM_Phase12.docx` : rapport de projet (livraison finale).
 
