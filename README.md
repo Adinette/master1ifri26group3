@@ -1,9 +1,24 @@
 # SFMC Bénin
 
-Plateforme microservices de supervision et de pilotage pour SFMC Bénin.
-Le dépôt technique conserve le nom `tp_twm` (cf. `package.json`).
+Plateforme microservices de supervision et de pilotage pour la **SFMC Bénin**,
+entreprise spécialisée dans la production et la distribution de matériaux de
+construction (ciment, fer, briques, granulats).
 
-> Branche active : `phase-12-ui-theme-dashboard` (itération finale Phase 12).
+La plateforme couvre les trois chaînes métier identifiées dans le cahier des
+charges : **production**, **commerciale** et **logistique**, avec une gestion
+distribuée par microservices, une communication événementielle (RabbitMQ) et
+une authentification centralisée (NextAuth + JWT).
+
+> **Projet réalisé par le Groupe 3** — Master 1 IFRI, *Technologies Web et Mobile*.
+> Stack imposée : **Next.js**.
+>
+> **Membres :**
+>
+> - AGBOGBA ZOUNON Silas O. C.
+> - ANATO K. Freddy
+> - DOUGLOUI Adinette
+>
+> Cahier des charges complet : `docs/CAHIER DES CHARGES DÉTAILLÉ-Bon.pdf`.
 
 ## Stack
 
@@ -38,7 +53,32 @@ Le dépôt technique conserve le nom `tp_twm` (cf. `package.json`).
 - Node.js 20+
 - npm 10+
 - Docker Desktop
-- Fichier `.env` configuré à la racine
+- Une instance **PostgreSQL** accessible (locale ou hébergée — voir ci-dessous)
+- Fichier `.env` configuré à la racine (voir section suivante)
+
+## Configuration (`.env`)
+
+Le projet a besoin d'un fichier **`.env`** à la racine. Un modèle complet est
+fourni dans **`.env.example`** — il suffit de le copier et d'adapter les valeurs :
+
+```bash
+cp .env.example .env
+```
+
+Le fichier `.env.example` documente toutes les variables consommées par le
+front, les microservices et `prisma.config.ts`. Les variables critiques :
+
+- `DATABASE_URL` — chaîne de connexion PostgreSQL (**obligatoire**).
+- `NEXTAUTH_SECRET` / `JWT_SECRET` — clés de signature des tokens.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — OAuth Google (optionnel).
+- `RABBITMQ_URL` — par défaut `amqp://guest:guest@localhost:5672`
+  (correspond au RabbitMQ lancé par `npm run dev:infra`).
+- `*_SERVICE_URL` — URLs des microservices (défauts en local sur `localhost:3001-3009`).
+
+> ⚠️ **À propos de PostgreSQL** : `docker-compose.yml` lance Postgres uniquement
+> pour Kong, **pas** pour l'application. Il faut donc soit installer PostgreSQL
+> en local, soit utiliser un service hébergé (Neon, Supabase, etc.) et adapter
+> `DATABASE_URL` en conséquence.
 
 ## Démarrage local
 
@@ -48,19 +88,49 @@ Le dépôt technique conserve le nom `tp_twm` (cf. `package.json`).
    npm install
    ```
 
-2. Démarrer l'infrastructure (Docker : Postgres, RabbitMQ, Kong) :
+2. Créer et renseigner le fichier `.env` (voir section ci-dessus) :
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Générer les clients Prisma (racine + 9 microservices) :
+
+   ```bash
+   npx prisma generate
+   npx prisma generate --schema services/auth/prisma/schema.prisma
+   npx prisma generate --schema services/user/prisma/schema.prisma
+   npx prisma generate --schema services/product/prisma/schema.prisma
+   npx prisma generate --schema services/inventory/prisma/schema.prisma
+   npx prisma generate --schema services/order/prisma/schema.prisma
+   npx prisma generate --schema services/production/prisma/schema.prisma
+   npx prisma generate --schema services/billing/prisma/schema.prisma
+   npx prisma generate --schema services/notification/prisma/schema.prisma
+   npx prisma generate --schema services/reporting/prisma/schema.prisma
+   ```
+
+   > Astuce : un build complet (`npm run build` dans un service) exécute déjà
+   > `prisma generate` automatiquement.
+
+4. Appliquer le schéma sur la base (première installation uniquement) :
+
+   ```bash
+   npx prisma db push
+   ```
+
+5. Démarrer l'infrastructure (Docker : RabbitMQ, Kong) :
 
    ```bash
    npm run dev:infra
    ```
 
-3. Démarrer les microservices :
+6. Démarrer les microservices :
 
    ```bash
    npm run dev:services
    ```
 
-4. Démarrer le frontend principal :
+7. Démarrer le frontend principal :
 
    ```bash
    npm run dev
@@ -222,7 +292,8 @@ performance perceptive du dashboard, et cohérence visuelle de la marque.
 - `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`).
 - `docs/` : cahier des charges, guide OAuth et rapport de projet.
 - `tests/` : tests intégration root (lancés via `npm test`).
-- `docker-compose.yml` : infra locale (Postgres, RabbitMQ, Kong).
+- `docker-compose.yml` : infra locale (RabbitMQ, Kong + Postgres dédié à Kong).
+  La base Postgres applicative est à fournir séparément via `DATABASE_URL`.
 - `proxy.ts` : proxy de développement frontend vers les microservices.
 
 ## Documents complémentaires
