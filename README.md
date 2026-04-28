@@ -1,163 +1,183 @@
 # SFMC Bénin
 
-Plateforme microservices de supervision et pilotage pour SFMC Bénin.
-Le dépôt technique conserve le nom tp_twm.
+Plateforme microservices de supervision et de pilotage pour SFMC Bénin.
+Le dépôt technique conserve le nom `tp_twm` (cf. `package.json`).
 
 > Branche active : `phase-12-ui-theme-dashboard` (itération finale Phase 12).
 
 ## Stack
 
-- Frontend principal: Next.js 16, React 19, TypeScript, Tailwind CSS 4
-- Architecture: BFF dans app/api + microservices metier dans services/*
-- Messagerie: RabbitMQ (exchange sfmc.events)
-- Base de donnees: PostgreSQL via Prisma
-- API Gateway: Kong
+- **Frontend principal** : Next.js 16, React 19, TypeScript, Tailwind CSS 4
+- **Architecture** : BFF dans `app/api` + microservices métier dans `services/*`
+- **Messagerie** : RabbitMQ (exchange `sfmc.events`)
+- **Base de données** : PostgreSQL via Prisma
+- **API Gateway** : Kong
+- **Auth** : NextAuth (config dans `app/lib/auth-options.ts`)
 
 ## Services et ports
 
-- Frontend principal: 3000
-- Auth Service: 3001
-- User Service: 3002
-- Product Service: 3003
-- Inventory Service: 3004
-- Order Service: 3005
-- Production Service: 3006
-- Billing Service: 3007
-- Notification Service: 3008
-- Reporting Service: 3009
-- Kong Proxy: 8000
-- Kong Admin: 8001
-- RabbitMQ: 5672
-- RabbitMQ UI: 15672
+| Service | Port |
+| --- | --- |
+| Frontend principal | 3000 |
+| Auth Service | 3001 |
+| User Service | 3002 |
+| Product Service | 3003 |
+| Inventory Service | 3004 |
+| Order Service | 3005 |
+| Production Service | 3006 |
+| Billing Service | 3007 |
+| Notification Service | 3008 |
+| Reporting Service | 3009 |
+| Kong Proxy | 8000 |
+| Kong Admin | 8001 |
+| RabbitMQ (AMQP) | 5672 |
+| RabbitMQ UI | 15672 |
 
-## Prerequis
+## Prérequis
 
 - Node.js 20+
 - npm 10+
 - Docker Desktop
-- Fichier .env configure
+- Fichier `.env` configuré à la racine
 
-## Demarrage local
+## Démarrage local
 
-1. Installer les dependances:
+1. Installer les dépendances :
 
-npm install
+   ```bash
+   npm install
+   ```
 
-2. Demarrer l'infrastructure:
+2. Démarrer l'infrastructure (Docker : Postgres, RabbitMQ, Kong) :
 
-npm run dev:infra
+   ```bash
+   npm run dev:infra
+   ```
 
-3. Demarrer les microservices:
+3. Démarrer les microservices :
 
-npm run dev:services
+   ```bash
+   npm run dev:services
+   ```
 
-4. Demarrer le frontend principal:
+4. Démarrer le frontend principal :
 
-npm run dev
+   ```bash
+   npm run dev
+   ```
 
-Option tout-en-un (infra + front + services):
+Option tout-en-un (infra + front + services + init des consumers) :
 
+```bash
 npm run dev:full
+```
 
-## Verification technique
+## Vérification technique
 
-Build racine:
+Build racine :
 
+```bash
 npm run build
+```
 
-Build service production:
+Build d'un microservice (exemple : production) :
 
+```bash
 npm --prefix services/production run build
+```
 
-Note: sur Windows, un lint global peut etre ralenti si des dossiers .next de services existent deja.
+> Note : sur Windows, un lint global peut être ralenti si des dossiers `.next`
+> de services existent déjà. Les nettoyer si besoin avant de relancer le lint.
 
-## Verification fonctionnelle Frontend
+## Vérification fonctionnelle (Frontend)
 
-- Navigation dashboard sans incoherence:
-  - billing, notifications, orders, production, products, profile, reporting, services, settings, stock, users, versions
-- Pages metier:
-  - Produits: creation/modification/suppression
-  - Commandes: creation + changement de statut
-  - Stock: mouvements IN/OUT + visualisation alertes
-  - Production: creation lot + passage completed
-  - Notifications: lecture + actualisation
+- Navigation dashboard sans incohérence sur les pages :
+  `billing`, `notifications`, `orders`, `production`, `products`, `profile`,
+  `reporting`, `services`, `settings`, `stock`, `users`, `versions`.
+- Pages métier :
+  - **Produits** : création / modification / suppression.
+  - **Commandes** : création + changement de statut + annulation (saga).
+  - **Stock** : mouvements IN / OUT / ADJUST / RELEASE + visualisation des alertes.
+  - **Production** : création de lot + passage à `completed`.
+  - **Notifications** : lecture + actualisation.
 
-## Verification fonctionnelle Backend et evenements
+## Vérification fonctionnelle (Backend & événements)
 
-1. Creation commande:
-- Order Service tente la reservation auto de stock via Inventory.
-- Si stock suffisant: commande validated.
-- Si stock insuffisant: commande pending + emission stock.alert.
+1. **Création de commande**
+   - Order Service tente la réservation automatique de stock via Inventory.
+   - Si stock suffisant : commande `validated`.
+   - Si stock insuffisant : commande `pending` + émission de `stock.alert`.
 
-2. Reaction production:
-- Production consumer ecoute stock.alert.
-- Creation auto d un lot de production planifie.
+2. **Réaction production**
+   - Le consumer Production écoute `stock.alert`.
+   - Création automatique d'un lot de production planifié.
 
-3. Remise en stock:
-- Quand un lot passe a completed, Production publie stock.updated.
-- Inventory consumer recoit stock.updated et incremente le stock.
+3. **Remise en stock**
+   - Quand un lot passe à `completed`, Production publie `stock.updated`.
+   - Le consumer Inventory reçoit `stock.updated` et incrémente le stock.
 
-4. Notifications:
-- Notification consumer ecoute order.created, payment.confirmed, stock.alert.
-- Les notifications sont enregistrees et exposees par API.
+4. **Notifications**
+   - Le consumer Notification écoute `order.created`, `payment.confirmed`, `stock.alert`.
+   - Les notifications sont enregistrées et exposées par API.
 
 ## Initialisation des consumers RabbitMQ
 
-Appeler ces endpoints apres demarrage local:
+Appeler ces endpoints après le démarrage local (déclenche l'abonnement aux files) :
 
-- http://localhost:3004/api/init
-- http://localhost:3006/api/init
-- http://localhost:3008/api/init
+- <http://localhost:3004/api/init>
+- <http://localhost:3006/api/init>
+- <http://localhost:3008/api/init>
 
 ## Correctifs inclus dans cette livraison
 
 - Correction JSX de la sidebar dashboard.
-- Stabilisation build de services/production avec Prisma lazy client.
-- Correction Next.js 16 sur auth:
-  - extraction de la config NextAuth dans app/lib/auth-options.ts
-  - suppression de l export non autorise dans la route app/api/auth/[...nextauth]/route.ts
-- Build racine valide apres correction.
-- Build services/production valide.
+- Stabilisation du build de `services/production` avec un client Prisma `lazy`.
+- Correction Next.js 16 sur l'auth :
+  - extraction de la config NextAuth dans `app/lib/auth-options.ts` ;
+  - suppression de l'export non autorisé dans la route
+    `app/api/auth/[...nextauth]/route.ts`.
+- Build racine valide après correction.
+- Build `services/production` valide.
 
-## Phase 12 - Itération finale (avril 2026)
+## Phase 12 — Itération finale (avril 2026)
 
-Cette dernière passe consolide trois axes : conformité métier (saga d annulation),
+Cette dernière passe consolide trois axes : conformité métier (saga d'annulation),
 performance perceptive du dashboard, et cohérence visuelle de la marque.
 
-### 1. Annulation de commande - saga complète
+### 1. Annulation de commande — saga complète
 
 - Endpoint `POST /api/orders/:id/cancel` orchestre la saga :
-  - Inventory : `POST /api/stock/release` libère le stock réservé.
-  - Billing : `POST /api/invoices/cancel-by-order/:orderId` annule les factures non payées.
-  - Order : statut `cancelled`, publication `order.cancelled` sur RabbitMQ.
-- Frontend : bouton Annuler avec confirmation sur `/dashboard/orders`.
+  - **Inventory** : `POST /api/stock/release` libère le stock réservé.
+  - **Billing** : `POST /api/invoices/cancel-by-order/:orderId` annule les factures non payées.
+  - **Order** : statut `cancelled`, publication de `order.cancelled` sur RabbitMQ.
+- Frontend : bouton « Annuler » avec confirmation sur `/dashboard/orders`.
 - Reporting : KPI `cancelledOrders` ajouté au tableau de bord.
-- Inventory publie `stock.updated` sur **tout** mouvement (in / out / adjust / release)
+- Inventory publie `stock.updated` sur **tout** mouvement (`in` / `out` / `adjust` / `release`)
   pour que reporting reste en phase avec le stock réel.
 
 ### 2. Performance du dashboard
 
 - Proxy `/api/reporting/dashboard` : cache mémoire 30 s + stale-while-error
-  (ressert l ancienne copie si reporting plante).
+  (ressert l'ancienne copie si reporting plante).
 - Reporting `dashboard/route.ts` : timeout 800 ms par appel micro-service
-  (`AbortSignal.timeout`) et bascule en `available:false` si un micro est lent.
+  (`AbortSignal.timeout`) et bascule en `available: false` si un micro est lent.
 - `/api/services-status` et `/api/kong-status` : cache 10 s, timeout 600 ms par probe,
   dédoublonnage des requêtes concurrentes (in-flight coalescing).
 - `app/dashboard/page.tsx` : `React.memo` sur `KpiCard`, `BarChart`, `DonutChart`,
-  `InfraDot` ; les health-checks d infra sont différés de 200 ms après le premier paint
-  pour donner la priorité réseau au reporting.
+  `InfraDot` ; les health-checks d'infra sont différés de 200 ms après le premier
+  paint pour donner la priorité réseau au reporting.
 - Helper client `app/lib/client-cache.ts` : cache mémoire 5 s + déduplication
   des fetches GET, adopté dans `/dashboard/orders`, `/dashboard/billing`,
   `/dashboard/production`. Les mutations invalident proprement (cross-page :
-  l annulation d une commande invalide stock + factures).
+  l'annulation d'une commande invalide stock + factures).
 - Correction `react-hooks/immutability` (React 19) sur `DonutChart` :
-  remplacement de la mutation d offset par un `reduce`.
+  remplacement de la mutation d'offset par un `reduce`.
 
 ### 3. Cohérence de marque
 
-- Marque unifiée en « SFMC Bénin » partout dans l UI :
+- Marque unifiée en « SFMC Bénin » partout dans l'UI :
   - `app/components/DashboardSidebar.tsx` (desktop) corrigé (était « Bénin ERP »).
-  - `app/layout.tsx` : metadata title et description avec accents.
+  - `app/layout.tsx` : metadata `title` et `description` avec accents.
   - `app/front/auth/login/page.tsx` : titre de connexion aligné.
 - Identifiants techniques laissés intacts : domaine `sfmc-benin.bj`, animation CSS
   `sfmc-ticker`, URL WhatsApp encodées.
@@ -171,38 +191,51 @@ performance perceptive du dashboard, et cohérence visuelle de la marque.
 
 ### Fichiers clés ajoutés ou modifiés
 
-Nouveaux endpoints :
+**Nouveaux endpoints :**
 
 - `services/inventory/app/api/stock/release/route.ts`
 - `services/billing/app/api/invoices/cancel-by-order/[orderId]/route.ts`
 - `services/order/app/api/orders/[id]/cancel/route.ts`
 - `app/api/orders/[id]/cancel/route.ts` (proxy)
 
-Nouveaux helpers :
+**Nouveaux helpers :**
 
 - `app/lib/client-cache.ts`
 - `services/inventory/lib/stock-workflow.ts` : `releaseStockForOrder`
 - `services/billing/lib/billing-store.ts` : `cancelInvoice`, `cancelInvoicesByOrder`
 
-Mises à jour notables :
+**Mises à jour notables :**
 
 - `app/api/reporting/dashboard/route.ts` (cache 30 s)
 - `app/api/services-status/route.ts`, `app/api/kong-status/route.ts` (cache + coalescing)
 - `services/reporting/app/api/dashboard/route.ts` (timeouts + KPI annulations)
-- `app/dashboard/page.tsx`, `app/dashboard/orders/page.tsx`, `app/dashboard/billing/page.tsx`,
-  `app/dashboard/production/page.tsx`
+- `app/dashboard/page.tsx`, `app/dashboard/orders/page.tsx`,
+  `app/dashboard/billing/page.tsx`, `app/dashboard/production/page.tsx`
 
 ## Arborescence utile
 
-- app: frontend principal, pages, dashboard, BFF
-- services: microservices metier
-- prisma: schema Prisma principal
-- docs: documents et scripts de generation
-- docker-compose.yml: infra locale
+- `app/` : frontend principal, pages, dashboard, BFF (`app/api`).
+- `services/` : microservices métier (auth, user, product, inventory, order,
+  production, billing, notification, reporting).
+- `prisma/` : schéma Prisma principal.
+- `kong/` : configuration de la gateway Kong.
+- `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`).
+- `docs/` : cahier des charges, guide OAuth et rapport de projet.
+- `tests/` : tests intégration root (lancés via `npm test`).
+- `docker-compose.yml` : infra locale (Postgres, RabbitMQ, Kong).
+- `proxy.ts` : proxy de développement frontend vers les microservices.
 
-## Liens de base
+## Documents complémentaires
 
-- Accueil: http://localhost:3000
-- Catalogue: http://localhost:3000/catalogue
-- Login: http://localhost:3000/front/auth/login
-- Dashboard: http://localhost:3000/dashboard
+- `docs/CAHIER DES CHARGES DÉTAILLÉ-Bon.pdf` : cahier des charges fonctionnel.
+- `docs/Guide_Google_OAuth.html` : guide d'intégration Google OAuth.
+- `docs/Rapport_Projet_TWM_Phase12.docx` : rapport de projet (livraison finale).
+
+## Liens de base (en local)
+
+- **Accueil** : <http://localhost:3000>
+- **Catalogue** : <http://localhost:3000/catalogue>
+- **Login** : <http://localhost:3000/front/auth/login>
+- **Dashboard** : <http://localhost:3000/dashboard>
+- **Kong Admin** : <http://localhost:8001>
+- **RabbitMQ UI** : <http://localhost:15672>
