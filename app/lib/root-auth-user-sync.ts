@@ -75,7 +75,3 @@ export async function updateRootAuthUserByEmail(currentEmail: string, input: Upd
     select: { id: true, email: true, name: true },
   })
 }
-
-export async function deleteRootAuthUserByEmail(email: string) {
-  return prisma.users.deleteMany({ where: { email } })
-}

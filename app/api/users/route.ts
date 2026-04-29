@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server'
 import { requireAdminSession } from '@/app/lib/require-admin-session'
 
 import {
-  createRootAuthUser,
   findRootAuthUserByEmail,
 } from '@/app/lib/root-auth-user-sync'
 
@@ -19,7 +18,8 @@ export async function GET() {
     const res = await fetch(`${USER_SERVICE}/api/users`, { cache: 'no-store' })
     const data = await res.json()
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users GET]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
@@ -49,29 +49,9 @@ export async function POST(req: NextRequest) {
     })
     const data = await res.json()
 
-    if (!res.ok) {
-      return Response.json(data, { status: res.status })
-    }
-
-    try {
-      await createRootAuthUser({
-        name: body.name,
-        email: body.email,
-        password: body.password,
-      })
-    } catch {
-      if (typeof data?.id === 'number') {
-        await fetch(`${USER_SERVICE}/api/users/${data.id}`, { method: 'DELETE' })
-      }
-
-      return Response.json(
-        { error: 'Création annulée: synchronisation impossible avec l’authentification principale' },
-        { status: 500 }
-      )
-    }
-
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users POST]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
