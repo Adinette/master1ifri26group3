@@ -30,8 +30,8 @@ export default function Navbar() {
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto lg:px-8">
+        <div className="flex items-center justify-between h-16 px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
@@ -115,7 +115,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden py-4 space-y-1 border-t border-blue-100/40 dark:border-zinc-800">
+          <div className="md:hidden bg-white py-4 space-y-1 border-t border-blue-100/40 dark:border-zinc-800">
             {publicLinks.map((link) => (
               <Link
                 key={link.label}

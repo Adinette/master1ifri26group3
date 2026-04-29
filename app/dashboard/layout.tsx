@@ -32,19 +32,24 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden">
-      <DashboardSidebar />
-      <div className="flex flex-col flex-1 overflow-hidden lg:ml-64">
-        <DashboardNavbar />
-        <div className="relative flex-1 overflow-y-auto">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -left-12 top-0 h-52 w-52 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-400/10" />
-            <div className="absolute right-0 top-16 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-400/10" />
-            <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl dark:bg-emerald-400/10" />
-          </div>
-          <div className="relative">{children}</div>
-        </div>
+  <div className="flex min-h-screen overflow-x-hidden">
+  <DashboardSidebar />
+  {/* 
+    - Mobile (< md)   : pas de marge, sidebar est un top bar 
+    - Tablette (md→lg): marge gauche 64px (w-16) pour la sidebar icônes
+    - Desktop (≥ lg)  : marge gauche 256px (w-64) pour la sidebar complète
+  */}
+  <div className="flex flex-col flex-1 overflow-hidden md:ml-16 lg:ml-64">
+    <DashboardNavbar />
+    <div className="relative flex-1 overflow-y-auto">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-12 top-0 h-52 w-52 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-400/10" />
+        <div className="absolute right-0 top-16 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-400/10" />
+        <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl dark:bg-emerald-400/10" />
       </div>
+      <div className="relative">{children}</div>
     </div>
+  </div>
+</div>
   )
 }
