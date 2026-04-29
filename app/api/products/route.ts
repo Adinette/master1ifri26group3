@@ -8,7 +8,8 @@ export async function GET() {
     const res = await fetch(`${PRODUCT_SERVICE}/api/products`, { cache: 'no-store' })
     const data = await res.json()
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Products GET]', err)
     return Response.json({ error: 'Service produits indisponible' }, { status: 503 })
   }
 }
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
     })
     const data = await res.json()
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Products POST]', err)
     return Response.json({ error: 'Service produits indisponible' }, { status: 503 })
   }
 }

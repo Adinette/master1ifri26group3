@@ -19,7 +19,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     const res = await fetch(`${USER_SERVICE}/api/users/${id}`, { cache: 'no-store' })
     const data = await res.json()
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users GET by ID]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
@@ -60,7 +61,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const data = await res.json()
 
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users PUT]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
@@ -86,7 +88,8 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     const data = await res.json()
 
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users DELETE]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }

@@ -18,7 +18,8 @@ export async function GET() {
     const res = await fetch(`${USER_SERVICE}/api/users`, { cache: 'no-store' })
     const data = await res.json()
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users GET]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
@@ -49,7 +50,8 @@ export async function POST(req: NextRequest) {
     const data = await res.json()
 
     return Response.json(data, { status: res.status })
-  } catch {
+  } catch (err) {
+    console.error('[BFF Users POST]', err)
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
   }
 }
