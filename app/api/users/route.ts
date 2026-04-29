@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server'
 import { requireAdminSession } from '@/app/lib/require-admin-session'
 
 import {
-  createRootAuthUser,
   findRootAuthUserByEmail,
 } from '@/app/lib/root-auth-user-sync'
 
@@ -48,27 +47,6 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     })
     const data = await res.json()
-
-    if (!res.ok) {
-      return Response.json(data, { status: res.status })
-    }
-
-    try {
-      await createRootAuthUser({
-        name: body.name,
-        email: body.email,
-        password: body.password,
-      })
-    } catch {
-      if (typeof data?.id === 'number') {
-        await fetch(`${USER_SERVICE}/api/users/${data.id}`, { method: 'DELETE' })
-      }
-
-      return Response.json(
-        { error: 'Création annulée: synchronisation impossible avec l’authentification principale' },
-        { status: 500 }
-      )
-    }
 
     return Response.json(data, { status: res.status })
   } catch {

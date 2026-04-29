@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireAdminSession } from '@/app/lib/require-admin-session'
 
 import {
-  deleteRootAuthUserByEmail,
   findRootAuthUserByEmail,
-  updateRootAuthUserByEmail,
 } from '@/app/lib/root-auth-user-sync'
 
 const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://localhost:3002'
@@ -61,23 +59,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     })
     const data = await res.json()
 
-    if (!res.ok) {
-      return Response.json(data, { status: res.status })
-    }
-
-    try {
-      await updateRootAuthUserByEmail(currentUserData.email, {
-        name: body.name,
-        email: body.email,
-        password: body.password,
-      })
-    } catch {
-      return Response.json(
-        { error: 'Utilisateur mis à jour dans le service mais non synchronisé avec l’authentification principale' },
-        { status: 500 }
-      )
-    }
-
     return Response.json(data, { status: res.status })
   } catch {
     return Response.json({ error: 'Service utilisateurs indisponible' }, { status: 503 })
@@ -103,19 +84,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
 
     const res = await fetch(`${USER_SERVICE}/api/users/${id}`, { method: 'DELETE' })
     const data = await res.json()
-
-    if (!res.ok) {
-      return Response.json(data, { status: res.status })
-    }
-
-    try {
-      await deleteRootAuthUserByEmail(currentUserData.email)
-    } catch {
-      return Response.json(
-        { error: 'Utilisateur supprimé du service mais encore présent dans l’authentification principale' },
-        { status: 500 }
-      )
-    }
 
     return Response.json(data, { status: res.status })
   } catch {
