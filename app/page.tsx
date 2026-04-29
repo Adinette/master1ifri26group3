@@ -247,7 +247,7 @@ export default function HomePage() {
 
         /* ── TABLET ≤ 1024px ── */
         @media (max-width: 1024px) and (min-width: 769px) {
-          .hero-grid { grid-template-columns: 1fr; }
+          .hero-grid { grid-template-columns: 1fr; min-height: auto; padding-top: 4rem; }
           .hero-right { display: none; }
           .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
           .featured-grid { grid-template-columns: 1fr; gap: 2rem; }
