@@ -94,43 +94,61 @@ front, les microservices et `prisma.config.ts`. Les variables critiques :
    cp .env.example .env
    ```
 
-3. Générer les clients Prisma (racine + 9 microservices) :
+3. Distribuer le `.env` dans tous les microservices :
+
+   ```bash
+   npm run setup:env
+   ```
+
+   > Chaque microservice Next.js charge son propre `.env` depuis son dossier.
+   > Ce script copie le `.env` racine dans chacun des 9 services.
+
+4. Installer les dépendances des microservices :
+
+   ```bash
+   foreach ($svc in 'auth','user','product','inventory','order','production','billing','notification','reporting') {
+     npm --prefix "services/$svc" install
+   }
+   ```
+
+5. Générer les clients Prisma (racine + 9 microservices) :
 
    ```bash
    npx prisma generate
-   npx prisma generate --schema services/auth/prisma/schema.prisma
-   npx prisma generate --schema services/user/prisma/schema.prisma
-   npx prisma generate --schema services/product/prisma/schema.prisma
-   npx prisma generate --schema services/inventory/prisma/schema.prisma
-   npx prisma generate --schema services/order/prisma/schema.prisma
-   npx prisma generate --schema services/production/prisma/schema.prisma
-   npx prisma generate --schema services/billing/prisma/schema.prisma
-   npx prisma generate --schema services/notification/prisma/schema.prisma
-   npx prisma generate --schema services/reporting/prisma/schema.prisma
+   foreach ($svc in 'auth','user','product','inventory','order','production','billing','notification','reporting') {
+     npx prisma generate --schema "services/$svc/prisma/schema.prisma"
+   }
    ```
 
-   > Astuce : un build complet (`npm run build` dans un service) exécute déjà
-   > `prisma generate` automatiquement.
-
-4. Appliquer le schéma sur la base (première installation uniquement) :
+6. Créer les tables et injecter les données de démo :
 
    ```bash
-   npx prisma db push
+   npm run db:reset
    ```
 
-5. Démarrer l'infrastructure (Docker : RabbitMQ, Kong) :
+   > Cette commande exécute `db:init` (création des 13 tables via `prisma/init.sql`)
+   > puis `db:seed` (5 users, 8 produits SFMC, stocks, commandes, factures…).
+   >
+   > ⚠️ **Ne pas utiliser `prisma db push` schéma par schéma** : Prisma considère
+   > chaque schéma comme source de vérité totale et supprime les tables absentes.
+   > Utiliser uniquement `npm run db:reset`.
+   >
+   > Comptes créés par le seed — mot de passe : `password123` :
+   > `freddy@sfmc.bj`, `adinette@sfmc.bj`, `silas@sfmc.bj`, `admin@sfmc.bj`, `demo@sfmc.bj`
+
+7. Démarrer l'infrastructure (Docker : RabbitMQ, Kong) :
 
    ```bash
    npm run dev:infra
    ```
 
-6. Démarrer les microservices :
+8. Démarrer les microservices :
 
    ```bash
    npm run dev:services
    ```
 
-7. Démarrer le frontend principal :
+9. Démarrer le frontend principal :
 
    ```bash
    npm run dev
@@ -141,6 +159,11 @@ Option tout-en-un (infra + front + services + init des consumers) :
 ```bash
 npm run dev:full
 ```
+
+> **Note** : le dashboard signale Kong et User Service en `KO` en local — c'est
+> attendu. Kong ne voit pas les services lancés sur `localhost` via `host.docker.internal`
+> (selon la config réseau de la machine). L'application fonctionne normalement
+> car le frontend appelle les services directement (sans passer par Kong).
 
 ## Vérification technique
 
@@ -229,8 +252,10 @@ coordination distribuée par événements RabbitMQ et une orchestration côté B
 - `services/` : microservices métier (auth, user, product, inventory, order,
   production, billing, notification, reporting).
 - `prisma/` : schéma Prisma principal.
+- `prisma/init.sql` : DDL complet pour créer les 13 tables (idempotent).
+- `prisma/seed.ts` : données de démo SFMC (utilisateurs, produits, stocks, commandes…).
 - `kong/` : configuration de la gateway Kong.
-- `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`).
+- `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`, `setup-env.mjs`).
 - `docs/` : cahier des charges, guide OAuth et rapport de projet.
 - `tests/` : tests intégration root (lancés via `npm test`).
 - `docker-compose.yml` : infra locale (RabbitMQ, Kong + Postgres dédié à Kong).

@@ -12,7 +12,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/**/*.test.ts"
+    "test": "tsx --test tests/**/*.test.ts",
+    "setup:env": "node scripts/setup-env.mjs",
+    "db:init": "tsx prisma/init.ts",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "npm run db:init && npm run db:seed"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
