@@ -61,7 +61,10 @@ export default function OrdersPage() {
       setOrders(Array.isArray(ordersData) ? ordersData : [])
       setProducts(Array.isArray(productsData) ? productsData : [])
     } catch {
-      setError('Impossible de charger les commandes. Vérifie que les services order et product sont démarrés.')
+      // En cas d'erreur service, on affiche simplement un tableau vide
+      // (pas d'erreur visible pour l'utilisateur)
+      setOrders([])
+      setProducts([])
     } finally {
       setLoading(false)
     }

@@ -75,6 +75,8 @@ export default function DashboardSidebar() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   const role = (session?.user?.role as Role | undefined) ?? 'user'
+  const isAdmin = role === 'admin'
+  const isOperator = role === 'operator'
   const canSee = (item: NavItem) => !item.roles || item.roles.includes(role)
 
   const visibleSections = navSections
@@ -94,7 +96,7 @@ export default function DashboardSidebar() {
             </div>
             <div>
               <p className="text-xs font-bold text-blue-900 dark:text-white leading-none">SFMC Bénin</p>
-              <p className="text-[10px] text-blue-500 dark:text-zinc-500 leading-none mt-0.5">Portail client</p>
+              <p className="text-[10px] text-blue-500 dark:text-zinc-500 leading-none mt-0.5">{isAdmin ? 'Portail admin' : isOperator ? 'Portail opérateur' : 'Portail client'}</p>
             </div>
           </div>
           {/* Burger button */}
@@ -187,7 +189,7 @@ export default function DashboardSidebar() {
             </div>
             <div>
               <span className="text-[0.7rem] font-semibold text-blue-400 dark:text-blue-300 tracking-wider">SFMC Bénin</span>
-              <p className="text-xs text-blue-400 dark:text-zinc-500 leading-none mt-1">Portail client</p>
+              <p className="text-xs text-blue-400 dark:text-zinc-500 leading-none mt-1">{isAdmin ? 'Portail admin' : isOperator ? 'Portail opérateur' : 'Portail client'}</p>
             </div>
           </Link>
 

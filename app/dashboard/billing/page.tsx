@@ -72,7 +72,9 @@ export default function BillingPage() {
       setInvoices(Array.isArray(invoicesData) ? invoicesData : [])
       setPayments(Array.isArray(paymentsData) ? paymentsData : [])
     } catch {
-      setError('Impossible de charger la facturation. Vérifie que les services order et billing sont démarrés.')
+      setOrders([])
+      setInvoices([])
+      setPayments([])
     } finally {
       setLoading(false)
     }
