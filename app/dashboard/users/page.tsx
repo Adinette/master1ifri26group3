@@ -158,6 +158,29 @@ export default function UsersPage() {
     }
   }
 
+  // Changement rapide de rôle directement depuis la liste (admin only).
+  const quickChangeRole = async (user: User, newRole: string) => {
+    if (newRole === user.role) return
+    if (user.email === session?.user?.email && newRole !== 'admin') {
+      const ok = confirm("Vous \u00eates sur le point de retirer votre propre r\u00f4le admin. Continuer ?")
+      if (!ok) return
+    }
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: user.name, email: user.email, role: newRole, phone: user.phone || undefined }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data?.error || 'Erreur lors du changement de r\u00f4le')
+      }
+      fetchUsers()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur inconnue')
+    }
+  }
+
   const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase()
     return (
@@ -270,17 +293,24 @@ export default function UsersPage() {
                     <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400">{user.email}</td>
                     <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400">{user.phone || '—'}</td>
                     <td className="px-5 py-4 text-center">
-                      <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${
-                        user.role === 'admin'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                          : user.role === 'operator'
-                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                            : user.role === 'client'
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
-                      }`}>
-                        {user.role}
-                      </span>
+                      <select
+                        value={user.role}
+                        onChange={(event) => quickChangeRole(user, event.target.value)}
+                        title="Changer le rôle de cet utilisateur"
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${
+                          user.role === 'admin'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                            : user.role === 'operator'
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                              : user.role === 'client'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                        }`}
+                      >
+                        {ROLES.map((role) => (
+                          <option key={role} value={role}>{role}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="inline-flex gap-2">

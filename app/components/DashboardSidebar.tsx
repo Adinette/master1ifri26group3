@@ -5,13 +5,22 @@ import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useState } from "react"
 
+type Role = 'admin' | 'operator' | 'client' | 'user'
+
 type NavItem = {
   label: string
   href: string
   icon: string
   tone: string
+  /** Rôles autorisés. Si absent, visible par tous les utilisateurs connectés. */
+  roles?: Role[]
 }
 
+// RBAC :
+//  - admin    : tout
+//  - operator : opérations métier (commandes, stock, production, reporting)
+//  - client   : son espace personnel uniquement (commandes/factures filtrées)
+//  - user     : équivalent client par défaut
 const navSections: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'Accueil',
@@ -31,21 +40,22 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
     title: 'Catalogue',
     items: [
       { label: 'Produits', href: '/dashboard/products', icon: '🛒', tone: 'from-fuchsia-500 to-pink-500' },
-      { label: 'Stock disponible', href: '/dashboard/stock', icon: '🏪', tone: 'from-lime-500 to-green-600' },
-      { label: 'Clients', href: '/dashboard/clients', icon: '🤝', tone: 'from-teal-500 to-cyan-600' },
+      { label: 'Stock disponible', href: '/dashboard/stock', icon: '🏪', tone: 'from-lime-500 to-green-600', roles: ['admin', 'operator'] },
+      { label: 'Clients', href: '/dashboard/clients', icon: '🤝', tone: 'from-teal-500 to-cyan-600', roles: ['admin', 'operator'] },
     ],
   },
   {
     title: 'Suivi',
     items: [
-      { label: 'Production', href: '/dashboard/production', icon: '🏭', tone: 'from-violet-500 to-indigo-600' },
-      { label: 'Rapports', href: '/dashboard/reporting', icon: '📊', tone: 'from-indigo-500 to-cyan-500' },
+      { label: 'Production', href: '/dashboard/production', icon: '🏭', tone: 'from-violet-500 to-indigo-600', roles: ['admin', 'operator'] },
+      { label: 'Rapports', href: '/dashboard/reporting', icon: '📊', tone: 'from-indigo-500 to-cyan-500', roles: ['admin', 'operator'] },
     ],
   },
   {
-    title: 'Système',
+    title: 'Administration',
     items: [
-      { label: 'Microservices', href: '/dashboard/services', icon: '🛰️', tone: 'from-emerald-500 to-teal-600' },
+      { label: 'Utilisateurs & rôles', href: '/dashboard/users', icon: '👥', tone: 'from-purple-500 to-pink-600', roles: ['admin'] },
+      { label: 'Microservices', href: '/dashboard/services', icon: '🛰️', tone: 'from-emerald-500 to-teal-600', roles: ['admin'] },
     ],
   },
   {
@@ -64,7 +74,14 @@ export default function DashboardSidebar() {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
-  const allItems = navSections.flatMap((s) => s.items)
+  const role = (session?.user?.role as Role | undefined) ?? 'user'
+  const canSee = (item: NavItem) => !item.roles || item.roles.includes(role)
+
+  const visibleSections = navSections
+    .map((section) => ({ ...section, items: section.items.filter(canSee) }))
+    .filter((section) => section.items.length > 0)
+
+  const allItems = visibleSections.flatMap((s) => s.items)
 
   return (
     <>
@@ -175,7 +192,7 @@ export default function DashboardSidebar() {
           </Link>
 
           <nav className="space-y-6">
-            {navSections.map((section) => (
+            {visibleSections.map((section) => (
               <div key={section.title}>
                 <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
                   {section.title}
