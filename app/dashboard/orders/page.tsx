@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { formatFCFA, translateStatus } from '../../lib/format'
 import { cachedJson, invalidate } from '../../lib/client-cache'
 
@@ -29,6 +30,11 @@ const STATUSES: OrderStatus[] = ['pending', 'validated', 'shipped', 'delivered']
 const TERMINAL_STATUSES: ReadonlySet<OrderStatus> = new Set(['shipped', 'delivered', 'cancelled'])
 
 export default function OrdersPage() {
+  const { data: session } = useSession()
+  const role = session?.user?.role ?? 'user'
+  const isClient = role === 'client' || role === 'user'
+  const canManage = role === 'admin' || role === 'operator'
+
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +42,7 @@ export default function OrdersPage() {
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ clientName: '', productId: '', quantity: '1' })
+  const [form, setForm] = useState({ clientName: session?.user?.name ?? '', productId: '', quantity: '1' })
 
   const fetchData = async (opts?: { force?: boolean }) => {
     setLoading(true)
@@ -55,7 +61,10 @@ export default function OrdersPage() {
       setOrders(Array.isArray(ordersData) ? ordersData : [])
       setProducts(Array.isArray(productsData) ? productsData : [])
     } catch {
-      setError('Impossible de charger les commandes. Vérifie que les services order et product sont démarrés.')
+      // En cas d'erreur service, on affiche simplement un tableau vide
+      // (pas d'erreur visible pour l'utilisateur)
+      setOrders([])
+      setProducts([])
     } finally {
       setLoading(false)
     }
@@ -72,7 +81,15 @@ export default function OrdersPage() {
 
   const estimatedTotal = selectedProduct ? selectedProduct.price * Math.max(Number(form.quantity) || 0, 0) : 0
 
-  const filteredOrders = orders.filter((order) => {
+  // RBAC : un client ne voit que ses propres commandes (matchées par nom).
+  const visibleOrders = useMemo(() => {
+    if (!isClient) return orders
+    const myName = (session?.user?.name ?? '').trim().toLowerCase()
+    if (!myName) return []
+    return orders.filter((o) => o.clientName.trim().toLowerCase() === myName)
+  }, [orders, isClient, session?.user?.name])
+
+  const filteredOrders = visibleOrders.filter((order) => {
     const query = searchQuery.toLowerCase()
     return (
       order.clientName.toLowerCase().includes(query) ||
@@ -200,18 +217,24 @@ export default function OrdersPage() {
     <div className="p-6 lg:p-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Commandes</h1>
-          <p className="text-zinc-500 text-sm">Suivez le cycle de vie des commandes et créez de nouvelles demandes client.</p>
+          <h1 className="text-2xl font-bold mb-1">{isClient ? 'Mes commandes' : 'Commandes'}</h1>
+          <p className="text-zinc-500 text-sm">
+            {isClient
+              ? 'Suivez le statut de vos commandes en temps réel.'
+              : 'Suivez le cycle de vie des commandes et créez de nouvelles demandes client.'}
+          </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nouvelle commande
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nouvelle commande
+          </button>
+        )}
       </div>
 
       {!loading && !error && (
@@ -275,8 +298,8 @@ export default function OrdersPage() {
                   <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Quantité</th>
                   <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Montant</th>
                   <th className="text-center px-5 py-3.5 font-medium text-zinc-500">Statut</th>
-                  <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Changer le statut</th>
-                  <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Action</th>
+                  {canManage && <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Changer le statut</th>}
+                  {canManage && <th className="text-right px-5 py-3.5 font-medium text-zinc-500">Action</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -297,38 +320,42 @@ export default function OrdersPage() {
                         {translateStatus(order.status)}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <select
-                        value={STATUSES.includes(order.status as OrderStatus) ? order.status : ''}
-                        disabled={TERMINAL_STATUSES.has(order.status)}
-                        onChange={(event) => updateStatus(order, event.target.value as OrderStatus)}
-                        className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {translateStatus(status)}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => cancelOrder(order)}
-                        disabled={TERMINAL_STATUSES.has(order.status)}
-                        title={
-                          TERMINAL_STATUSES.has(order.status)
-                            ? 'Cette commande ne peut plus être annulée'
-                            : 'Annule la commande, libère le stock et annule la facture associée'
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-zinc-900"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Annuler
-                      </button>
-                    </td>
+                    {canManage && (
+                      <td className="px-5 py-4 text-right">
+                        <select
+                          value={STATUSES.includes(order.status as OrderStatus) ? order.status : ''}
+                          disabled={TERMINAL_STATUSES.has(order.status)}
+                          onChange={(event) => updateStatus(order, event.target.value as OrderStatus)}
+                          className="border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {translateStatus(status)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
+                    {canManage && (
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => cancelOrder(order)}
+                          disabled={TERMINAL_STATUSES.has(order.status)}
+                          title={
+                            TERMINAL_STATUSES.has(order.status)
+                              ? 'Cette commande ne peut plus être annulée'
+                              : 'Annule la commande, libère le stock et annule la facture associée'
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-zinc-900"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Annuler
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

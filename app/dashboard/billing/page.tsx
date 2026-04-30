@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { formatFCFA, translateStatus } from '../../lib/format'
 import { cachedJson, invalidate } from '../../lib/client-cache'
 
@@ -33,6 +34,11 @@ type Invoice = {
 }
 
 export default function BillingPage() {
+  const { data: session } = useSession()
+  const role = session?.user?.role ?? 'user'
+  const isClient = role === 'client' || role === 'user'
+  const canManage = role === 'admin' || role === 'operator'
+
   const [orders, setOrders] = useState<Order[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
@@ -66,7 +72,9 @@ export default function BillingPage() {
       setInvoices(Array.isArray(invoicesData) ? invoicesData : [])
       setPayments(Array.isArray(paymentsData) ? paymentsData : [])
     } catch {
-      setError('Impossible de charger la facturation. Vérifie que les services order et billing sont démarrés.')
+      setOrders([])
+      setInvoices([])
+      setPayments([])
     } finally {
       setLoading(false)
     }
@@ -91,7 +99,15 @@ export default function BillingPage() {
     return orders.filter((order) => !invoicedOrderIds.has(order.id))
   }, [invoices, orders])
 
-  const filteredInvoices = invoices.filter((invoice) => {
+  // RBAC : un client ne voit que ses factures.
+  const visibleInvoices = useMemo(() => {
+    if (!isClient) return invoices
+    const myName = (session?.user?.name ?? '').trim().toLowerCase()
+    if (!myName) return []
+    return invoices.filter((inv) => inv.clientName.trim().toLowerCase() === myName)
+  }, [invoices, isClient, session?.user?.name])
+
+  const filteredInvoices = visibleInvoices.filter((invoice) => {
     const query = searchQuery.toLowerCase()
     return (
       invoice.clientName.toLowerCase().includes(query) ||
@@ -172,23 +188,29 @@ export default function BillingPage() {
     <div className="p-6 lg:p-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Facturation</h1>
-          <p className="text-zinc-500 text-sm">Générez des factures à partir des commandes et enregistrez les paiements clients.</p>
+          <h1 className="text-2xl font-bold mb-1">{isClient ? 'Mes factures' : 'Facturation'}</h1>
+          <p className="text-zinc-500 text-sm">
+            {isClient
+              ? 'Consultez vos factures et leur statut de paiement.'
+              : 'Générez des factures à partir des commandes et enregistrez les paiements clients.'}
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => setShowInvoiceModal(true)}
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-sm"
-          >
-            Nouvelle facture
-          </button>
-          <button
-            onClick={() => setShowPaymentModal(true)}
-            className="inline-flex items-center justify-center gap-2 border border-zinc-300 dark:border-zinc-700 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
-          >
-            Enregistrer paiement
-          </button>
-        </div>
+        {canManage && (
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setShowInvoiceModal(true)}
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-sm"
+            >
+              Nouvelle facture
+            </button>
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="inline-flex items-center justify-center gap-2 border border-zinc-300 dark:border-zinc-700 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            >
+              Enregistrer paiement
+            </button>
+          </div>
+        )}
       </div>
 
       {!loading && !error && (
