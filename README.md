@@ -165,6 +165,39 @@ npm run dev:full
 > (selon la config réseau de la machine). L'application fonctionne normalement
 > car le frontend appelle les services directement (sans passer par Kong).
 
+## Mode production (présentation)
+
+Pour une démo fluide (pages pré-compilées, pas de recompilation à la volée) :
+
+1. **Build** le BFF + les 9 microservices :
+
+   ```bash
+   npm run build:all
+   ```
+
+   > Le build des services est **séquentiel** (un à la fois) pour éviter les
+   > conflits de ressources CPU/RAM sur les machines du groupe.
+
+2. **Lancer l'infrastructure** (Docker : RabbitMQ, Kong) :
+
+   ```bash
+   npm run dev:infra
+   ```
+
+3. **Démarrer tout en production** :
+
+   ```bash
+   npm run start:all
+   ```
+
+   Cela lance 11 processus en parallèle (BFF + 9 services + init consumers).
+
+4. **Alternative manuelle** (si `start:all` surcharge la machine) :
+
+   Ouvrir 2 terminaux :
+   - Terminal 1 : `npm run start` (BFF, port 3000)
+   - Terminal 2 : `npm run start:services` (9 microservices, ports 3001-3009)
+
 ## Vérification technique
 
 Build racine :
@@ -255,7 +288,7 @@ coordination distribuée par événements RabbitMQ et une orchestration côté B
 - `prisma/init.sql` : DDL complet pour créer les 13 tables (idempotent).
 - `prisma/seed.ts` : données de démo SFMC (utilisateurs, produits, stocks, commandes…).
 - `kong/` : configuration de la gateway Kong.
-- `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`, `setup-env.mjs`).
+- `scripts/` : scripts utilitaires (`bootstrap-kong.mjs`, `init-consumers.mjs`, `setup-env.mjs`, `build-services.mjs`).
 - `docs/` : cahier des charges, guide OAuth et rapport de projet.
 - `tests/` : tests intégration root (lancés via `npm test`).
 - `docker-compose.yml` : infra locale (RabbitMQ, Kong + Postgres dédié à Kong).
