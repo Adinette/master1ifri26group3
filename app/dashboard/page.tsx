@@ -45,10 +45,50 @@ type InfraStatus = 'checking' | 'online' | 'offline'
 export default function DashboardPage() {
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(' ')[0] ?? 'client'
+  const role = session?.user?.role ?? 'user'
+  const isClient = role === 'client' || role === 'user'
 
   const [data, setData] = useState<ReportingPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // RBAC: filtrer les données pour les clients (ils ne voient que leurs commandes/factures)
+  const filteredData = useMemo(() => {
+    if (!data || !isClient) return data
+    const myName = (session?.user?.name ?? '').trim().toLowerCase()
+    if (!myName) return data
+
+    const myOrders = data.orders?.filter((o) => o.clientName?.trim().toLowerCase() === myName) || []
+    const myInvoices = data.invoices?.filter((i) => i.clientName?.trim().toLowerCase() === myName) || []
+    const myNotifications = data.notifications?.filter((n) => n.recipient?.trim().toLowerCase() === myName) || []
+
+    return {
+      ...data,
+      orders: myOrders,
+      invoices: myInvoices,
+      notifications: myNotifications,
+      stock: [], // Client ne voit pas le stock
+      production: [], // Client ne voit pas la production
+      summary: {
+        ...data.summary,
+        totalOrders: myOrders.length,
+        pendingOrders: myOrders.filter((o) => o.status === 'pending').length,
+        validatedOrders: myOrders.filter((o) => o.status === 'validated').length,
+        shippedOrders: myOrders.filter((o) => o.status === 'shipped').length,
+        deliveredOrders: myOrders.filter((o) => o.status === 'delivered').length,
+        cancelledOrders: myOrders.filter((o) => o.status === 'cancelled').length,
+        totalInvoices: myInvoices.length,
+        paidInvoices: myInvoices.filter((i) => i.status === 'paid').length,
+        totalRevenue: myInvoices.filter((i) => i.status === 'paid').reduce((sum, i) => sum + (i.amount || 0), 0),
+        pendingRevenue: myInvoices.filter((i) => i.status !== 'paid').reduce((sum, i) => sum + (i.amount || 0), 0),
+        totalStockItems: 0,
+        lowStockItems: 0,
+        totalBatches: 0,
+        completedBatches: 0,
+        totalNotifications: myNotifications.length,
+      }
+    }
+  }, [data, isClient, session?.user?.name])
 
   const [kongStatus, setKongStatus] = useState<InfraStatus>('checking')
   const [rabbitStatus, setRabbitStatus] = useState<InfraStatus>('checking')
@@ -89,20 +129,20 @@ export default function DashboardPage() {
   }, [])
 
   const orderStatusCounts = useMemo(() => {
-    if (!data) return { pending: 0, validated: 0, shipped: 0, cancelled: 0 }
+    if (!filteredData) return { pending: 0, validated: 0, shipped: 0, cancelled: 0 }
     return {
-      pending: data.summary.pendingOrders,
-      validated: data.summary.validatedOrders,
-      shipped: data.summary.shippedOrders,
+      pending: filteredData.summary.pendingOrders,
+      validated: filteredData.summary.validatedOrders,
+      shipped: filteredData.summary.shippedOrders,
       // Backend reporting expose dorénavant cancelledOrders ; on retombe sur
       // un calcul défensif si un service plus ancien ne le renvoie pas.
       cancelled:
-        data.summary.cancelledOrders ??
-        data.orders.filter((order) => order.status === 'cancelled').length,
+        filteredData.summary.cancelledOrders ??
+        filteredData.orders.filter((order) => order.status === 'cancelled').length,
     }
-  }, [data])
+  }, [filteredData])
 
-  const lowStockItems = data?.stock.filter((item) => item.quantity <= item.minThreshold) ?? []
+  const lowStockItems = filteredData?.stock.filter((item) => item.quantity <= item.minThreshold) ?? []
   const onlineServices = Object.values(serviceStatuses).filter((s) => s === 'online').length
   const totalServices = Object.keys(serviceStatuses).length
 
@@ -150,7 +190,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!loading && !error && data && (
+      {!loading && !error && filteredData && (
         <>
           {/* KPI cards */}
           <section>
@@ -159,7 +199,7 @@ export default function DashboardPage() {
                 <h2 className="text-base font-bold">Statistiques globales</h2>
                 <p className="text-xs text-zinc-500">Données consolidées des microservices</p>
               </div>
-              {data.partial && (
+              {filteredData.partial && (
                 <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-full px-2.5 py-1">
                   Données partielles
                 </span>
@@ -167,11 +207,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
-              <KpiCard icon="📦" label="Commandes" value={data.summary.totalOrders} sub={`${data.summary.pendingOrders} en attente`} tone="blue" />
-              <KpiCard icon="🏪" label="Stock" value={data.summary.totalStockItems} sub={`${lowStockItems.length} faibles`} tone={lowStockItems.length > 0 ? 'amber' : 'green'} />
-              <KpiCard icon="🧾" label="Factures" value={data.summary.totalInvoices} sub={`${data.summary.paidInvoices} payées`} tone="cyan" />
-              <KpiCard icon="🏭" label="Production" value={data.summary.totalBatches} sub={`${data.summary.completedBatches} terminés`} tone="violet" />
-              <KpiCard icon="💰" label="Revenus" value={formatFCFA(data.summary.totalRevenue)} sub={`${formatFCFA(data.summary.pendingRevenue)} en attente`} tone="green" small />
+              <KpiCard icon="📦" label="Commandes" value={filteredData.summary.totalOrders} sub={`${filteredData.summary.pendingOrders} en attente`} tone="blue" />
+              {!isClient && <KpiCard icon="🏪" label="Stock" value={filteredData.summary.totalStockItems} sub={`${lowStockItems.length} faibles`} tone={lowStockItems.length > 0 ? 'amber' : 'green'} />}
+              <KpiCard icon="🧾" label="Factures" value={filteredData.summary.totalInvoices} sub={`${filteredData.summary.paidInvoices} payées`} tone="cyan" />
+              {!isClient && <KpiCard icon="🏭" label="Production" value={filteredData.summary.totalBatches} sub={`${filteredData.summary.completedBatches} terminés`} tone="violet" />}
+              <KpiCard icon="💰" label="Revenus" value={formatFCFA(filteredData.summary.totalRevenue)} sub={`${formatFCFA(filteredData.summary.pendingRevenue)} en attente`} tone="green" small />
             </div>
           </section>
 
@@ -184,7 +224,7 @@ export default function DashboardPage() {
                   <h3 className="font-semibold">Commandes par statut</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">Histogramme — répartition globale</p>
                 </div>
-                <span className="text-xs text-zinc-400">Total : {data.summary.totalOrders}</span>
+                <span className="text-xs text-zinc-400">Total : {filteredData.summary.totalOrders}</span>
               </div>
               <BarChart
                 data={[
@@ -192,7 +232,7 @@ export default function DashboardPage() {
                   { label: 'Validées', value: orderStatusCounts.validated, color: '#3B82F6' },
                   { label: 'Expédiées', value: orderStatusCounts.shipped, color: '#10B981' },
                   { label: 'Annulées', value: orderStatusCounts.cancelled, color: '#EF4444' },
-                ]}
+                ].filter((d) => d.value > 0 || !isClient)}
               />
             </div>
 
@@ -204,10 +244,10 @@ export default function DashboardPage() {
               </div>
               <DonutChart
                 segments={[
-                  { label: 'Payées', value: data.summary.paidInvoices, color: '#10B981' },
-                  { label: 'En attente', value: Math.max(0, data.summary.totalInvoices - data.summary.paidInvoices), color: '#F59E0B' },
+                  { label: 'Payées', value: filteredData.summary.paidInvoices, color: '#10B981' },
+                  { label: 'En attente', value: Math.max(0, filteredData.summary.totalInvoices - filteredData.summary.paidInvoices), color: '#F59E0B' },
                 ]}
-                centerLabel={`${data.summary.totalInvoices}`}
+                centerLabel={`${filteredData.summary.totalInvoices}`}
                 centerSub="factures"
               />
             </div>
@@ -222,7 +262,7 @@ export default function DashboardPage() {
                 <Link href="/dashboard/orders" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Tout voir →</Link>
               </div>
               <div className="space-y-2">
-                {data.orders.slice(0, 5).map((order) => (
+                {filteredData.orders.slice(0, 5).map((order) => (
                   <div key={order.id} className="flex items-center justify-between rounded-lg border border-zinc-100 dark:border-zinc-800 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">Commande #{order.id}</p>
@@ -236,7 +276,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 ))}
-                {data.orders.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune commande</p>}
+                {filteredData.orders.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune commande</p>}
               </div>
             </div>
 
@@ -247,7 +287,7 @@ export default function DashboardPage() {
                 <Link href="/dashboard/billing" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Tout voir →</Link>
               </div>
               <div className="space-y-2">
-                {data.invoices.slice(0, 5).map((inv) => (
+                {filteredData.invoices.slice(0, 5).map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between rounded-lg border border-zinc-100 dark:border-zinc-800 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{inv.clientName}</p>
@@ -259,7 +299,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ))}
-                {data.invoices.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune facture</p>}
+                {filteredData.invoices.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune facture</p>}
               </div>
             </div>
 
@@ -270,7 +310,7 @@ export default function DashboardPage() {
                 <Link href="/dashboard/notifications" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Tout voir →</Link>
               </div>
               <div className="space-y-2">
-                {data.notifications.slice(0, 4).map((n) => (
+                {filteredData.notifications.slice(0, 4).map((n) => (
                   <div key={n.id} className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 truncate">
@@ -281,7 +321,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">{n.message}</p>
                   </div>
                 ))}
-                {data.notifications.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune notification</p>}
+                {filteredData.notifications.length === 0 && <p className="text-sm text-zinc-400 text-center py-4">Aucune notification</p>}
               </div>
             </div>
 
@@ -292,7 +332,7 @@ export default function DashboardPage() {
                 <Link href="/dashboard/stock" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Tout voir →</Link>
               </div>
               <div className="space-y-2">
-                {lowStockItems.slice(0, 5).map((item) => (
+                {!isClient && lowStockItems.slice(0, 5).map((item) => (
                   <div key={item.id} className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-900/10 px-3 py-2.5">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.productName}</p>
@@ -309,7 +349,8 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Infrastructure */}
+          {/* Infrastructure (caché pour les clients) */}
+          {!isClient && (
           <section className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -326,6 +367,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
+          )}
         </>
       )}
     </div>
