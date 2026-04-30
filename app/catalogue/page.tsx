@@ -1,6 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 /* ─── Types ─── */
 interface Product {
@@ -34,7 +36,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
 }
 
 /* ─── Carte produit détaillée ─── */
-function ProductCard({ p }: { p: Product }) {
+function ProductCard({ p, onOrder }: { p: Product; onOrder: (product: Product) => void }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -223,8 +225,9 @@ function ProductCard({ p }: { p: Product }) {
           >
             {open ? 'Réduire ↑' : 'Fiche technique ↓'}
           </button>
-          <Link
-            href="/front/auth/login"
+          <button
+            onClick={() => p.inStock && onOrder(p)}
+            disabled={!p.inStock}
             style={{
               fontSize: '0.75rem',
               fontWeight: 800,
@@ -232,14 +235,14 @@ function ProductCard({ p }: { p: Product }) {
               backgroundColor: p.inStock ? '#2563EB' : '#D4D0CA',
               padding: '0.5rem 1.25rem',
               borderRadius: '0.5rem',
-              textDecoration: 'none',
+              border: 'none',
+              cursor: p.inStock ? 'pointer' : 'not-allowed',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
-              pointerEvents: p.inStock ? 'auto' : 'none',
             }}
           >
             {p.inStock ? 'Commander' : 'Indisponible'}
-          </Link>
+          </button>
         </div>
       </div>
     </article>
@@ -248,11 +251,56 @@ function ProductCard({ p }: { p: Product }) {
 
 /* ─── PAGE ─── */
 export default function CataloguePage() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('Tous')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name')
+
+  /* Commande rapide */
+  const [orderProduct, setOrderProduct] = useState<Product | null>(null)
+  const [orderQty, setOrderQty] = useState(1)
+  const [orderLoading, setOrderLoading] = useState(false)
+  const [orderError, setOrderError] = useState('')
+
+  const handleOrder = (product: Product) => {
+    if (!session) {
+      router.push('/front/auth/login')
+      return
+    }
+    setOrderProduct(product)
+    setOrderQty(1)
+    setOrderError('')
+  }
+
+  const submitOrder = async () => {
+    if (!orderProduct) return
+    setOrderLoading(true)
+    setOrderError('')
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: session?.user?.name || 'Client',
+          productId: orderProduct.id,
+          quantity: orderQty,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors de la commande')
+      }
+      setOrderProduct(null)
+      router.push('/dashboard/orders')
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setOrderLoading(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/catalogue')
@@ -522,7 +570,7 @@ export default function CataloguePage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {filtered.map((p) => (
-                <ProductCard key={p.id} p={p} />
+                <ProductCard key={p.id} p={p} onOrder={handleOrder} />
               ))}
             </div>
           )}
@@ -554,6 +602,178 @@ export default function CataloguePage() {
           )}
         </section>
       </div>
+
+      {/* ── Modal commande rapide ── */}
+      {orderProduct && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(4px)',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '1rem',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              width: '100%',
+              maxWidth: '420px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid #E7E5E4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <h3 style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A' }}>
+                Commander — {orderProduct.name}
+              </h3>
+              <button
+                onClick={() => setOrderProduct(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.25rem',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1rem' }}>
+                Réf. {orderProduct.ref} · {orderProduct.price.toLocaleString('fr-FR')} FCFA / {orderProduct.unit}
+              </p>
+
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.5rem' }}>
+                Quantité ({orderProduct.unit})
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <button
+                  onClick={() => setOrderQty((q) => Math.max(1, q - 1))}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #E7E5E4',
+                    background: 'white',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  −
+                </button>
+                <span style={{ fontWeight: 800, fontSize: '1.1rem', minWidth: '40px', textAlign: 'center' }}>
+                  {orderQty}
+                </span>
+                <button
+                  onClick={() => setOrderQty((q) => q + 1)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #E7E5E4',
+                    background: 'white',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: '#F8FAFC',
+                  borderRadius: '0.75rem',
+                  padding: '1rem',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                  <span style={{ color: '#64748B' }}>Prix unitaire</span>
+                  <span style={{ fontWeight: 700 }}>{orderProduct.price.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                  <span style={{ color: '#64748B' }}>Quantité</span>
+                  <span style={{ fontWeight: 700 }}>× {orderQty}</span>
+                </div>
+                <div
+                  style={{
+                    borderTop: '1px solid #E7E5E4',
+                    marginTop: '0.5rem',
+                    paddingTop: '0.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '1rem',
+                    fontWeight: 800,
+                    color: '#0F172A',
+                  }}
+                >
+                  <span>Total</span>
+                  <span>{(orderProduct.price * orderQty).toLocaleString('fr-FR')} FCFA</span>
+                </div>
+              </div>
+
+              {orderError && (
+                <p style={{ color: '#DC2626', fontSize: '0.8rem', marginBottom: '1rem' }}>{orderError}</p>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={() => setOrderProduct(null)}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #E7E5E4',
+                    background: 'white',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    color: '#475569',
+                  }}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={submitOrder}
+                  disabled={orderLoading}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    background: '#2563EB',
+                    color: 'white',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: orderLoading ? 'wait' : 'pointer',
+                    opacity: orderLoading ? 0.7 : 1,
+                  }}
+                >
+                  {orderLoading ? 'Envoi…' : 'Confirmer la commande'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
